@@ -199,4 +199,42 @@ final class ProtocolTests: XCTestCase {
         do { _ = try await AuthAPI(transport: transport).usage(credentials()); XCTFail("Expected decoding error") }
         catch is DecodingError {} catch { XCTFail("Wrong error") }
     }
+    func testDevicePollSurvivesTransientFailuresBeforeApproval() async throws {
+        let grant = #"{"authorization_code":"c","code_verifier":"v"}"#
+        let tokens = #"{"access_token":"a","refresh_token":"r","expires_in":3600}"#
+        let transport = ScriptedTransport([("{}", 503), ("{}", 404), (grant, 200), (tokens, 200)])
+        let credentials = try await AuthAPI(transport: transport).complete(decodeCode())
+        XCTAssertEqual(credentials.refreshToken, "r")
+        let count = await transport.requests.count
+        XCTAssertEqual(count, 4)
+    }
+    func testDevicePollClientErrorStaysFatal() async throws {
+        let transport = ScriptedTransport([("{}", 400)])
+        do { _ = try await AuthAPI(transport: transport).complete(decodeCode()); XCTFail("Expected HTTP error") }
+        catch ServiceError.http(400) {} catch { XCTFail("Wrong error \(error)") }
+    }
+    func testFailedCodeExchangeIsNotRetried() async throws {
+        let grant = #"{"authorization_code":"c","code_verifier":"v"}"#
+        let transport = ScriptedTransport([(grant, 200), ("{}", 503)])
+        do { _ = try await AuthAPI(transport: transport).complete(decodeCode()); XCTFail("Expected HTTP error") }
+        catch ServiceError.http(503) {} catch { XCTFail("Wrong error \(error)") }
+        let count = await transport.requests.count
+        XCTAssertEqual(count, 2)
+    }
+    func testTransientPollFailureClassification() {
+        XCTAssertTrue(AuthAPI.isTransientPollFailure(URLError(.networkConnectionLost)))
+        XCTAssertFalse(AuthAPI.isTransientPollFailure(URLError(.cancelled)))
+        XCTAssertTrue(AuthAPI.isTransientPollFailure(ServiceError.http(429)))
+        XCTAssertTrue(AuthAPI.isTransientPollFailure(ServiceError.http(502)))
+        XCTAssertFalse(AuthAPI.isTransientPollFailure(ServiceError.http(400)))
+        XCTAssertFalse(AuthAPI.isTransientPollFailure(ServiceError.malformed))
+    }
+    func testWidgetTimelineServesRecentCacheInsteadOfFetching() {
+        let now = Date(timeIntervalSince1970: 10_000)
+        XCTAssertTrue(WidgetRefreshAttempt.timelineShouldFetch(updatedAt: nil, now: now))
+        XCTAssertFalse(WidgetRefreshAttempt.timelineShouldFetch(updatedAt: now.addingTimeInterval(-60), now: now))
+        XCTAssertTrue(WidgetRefreshAttempt.timelineShouldFetch(updatedAt: now.addingTimeInterval(-300), now: now))
+        // A clock that jumped backwards never pins the widget to its cache.
+        XCTAssertTrue(WidgetRefreshAttempt.timelineShouldFetch(updatedAt: now.addingTimeInterval(60), now: now))
+    }
 }

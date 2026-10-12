@@ -141,25 +141,49 @@ public struct AuthAPI: Sendable {
         guard status == 200 else { throw ServiceError.http(status) }
         return try JSONDecoder().decode(DeviceCode.self, from: data)
     }
-    public func pollOnce(_ code: DeviceCode) async throws -> TokenResponse? {
+    struct Grant: Decodable { let authorization_code: String; let code_verifier: String }
+    /// One poll of the device grant; nil while the user has not approved yet.
+    func pollGrant(_ code: DeviceCode) async throws -> Grant? {
         let (data, status) = try await post("/api/accounts/deviceauth/token", body: ["device_auth_id": code.deviceAuthID, "user_code": code.userCode])
         if status == 403 || status == 404 { return nil }
         guard status == 200 else { throw ServiceError.http(status) }
-        struct Grant: Decodable { let authorization_code: String; let code_verifier: String }
-        let grant = try JSONDecoder().decode(Grant.self, from: data)
+        return try JSONDecoder().decode(Grant.self, from: data)
+    }
+    func exchange(_ grant: Grant) async throws -> TokenResponse {
         try Task.checkCancellation()
         let (tokens, tokenStatus) = try await post("/oauth/token", body: ["grant_type": "authorization_code", "client_id": Self.clientID, "code": grant.authorization_code, "code_verifier": grant.code_verifier, "redirect_uri": "https://auth.openai.com/deviceauth/callback"], form: true)
         guard tokenStatus == 200 else { throw ServiceError.http(tokenStatus) }
         return try JSONDecoder().decode(TokenResponse.self, from: tokens)
     }
+    public func pollOnce(_ code: DeviceCode) async throws -> TokenResponse? {
+        guard let grant = try await pollGrant(code) else { return nil }
+        return try await exchange(grant)
+    }
     public func complete(_ code: DeviceCode) async throws -> Credentials {
         let deadline = ContinuousClock.now.advanced(by: .seconds(900))
+        var interval = code.interval
         while ContinuousClock.now < deadline {
             try Task.checkCancellation()
-            if let response = try await pollOnce(code) { return try Credentials(response: response) }
-            try await Task.sleep(for: .seconds(code.interval))
+            let grant: Grant?
+            do { grant = try await pollGrant(code) }
+            catch let error where Self.isTransientPollFailure(error) {
+                // A dropped connection or rate limit while the user is still typing the code
+                // must not throw away the whole sign-in; keep polling, slower after a 429.
+                try Task.checkCancellation()
+                if case ServiceError.http(429) = error { interval = min(60, interval * 2) }
+                grant = nil
+            }
+            // Only the wait-for-approval poll is retried: once a grant is issued the
+            // authorization code is single-use, so an exchange failure stays fatal.
+            if let grant { return try Credentials(response: await exchange(grant)) }
+            try await Task.sleep(for: .seconds(interval))
         }
         throw ServiceError.expired
+    }
+    static func isTransientPollFailure(_ error: Error) -> Bool {
+        if let error = error as? URLError { return error.code != .cancelled }
+        if case ServiceError.http(let status) = error { return status == 429 || (500...599).contains(status) }
+        return false
     }
     public func refresh(_ old: Credentials) async throws -> Credentials {
         let (data, status) = try await post("/oauth/token", body: ["grant_type": "refresh_token", "client_id": Self.clientID, "refresh_token": old.refreshToken, "scope": "openid profile email"])

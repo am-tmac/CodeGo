@@ -575,6 +575,14 @@ struct WidgetRefreshAttempt: Codable {
         failures = min(failures + 1, 5)
         nextAllowed = now.addingTimeInterval(min(3600, 300 * pow(2, Double(failures - 1))))
     }
+    /// The timeline also runs right after the App's own refresh (it reloads every timeline), so
+    /// a cache written moments ago is served instead of fetched a second time. The button is
+    /// not gated by this; it keeps its own throttle.
+    static let timelineFreshness: TimeInterval = 300
+    static func timelineShouldFetch(updatedAt: Date?, now: Date = Date()) -> Bool {
+        guard let updatedAt, updatedAt <= now else { return true }
+        return now.timeIntervalSince(updatedAt) >= timelineFreshness
+    }
     static func url(_ account: String) throws -> URL { try SharedStorage.snapshotURL(account).appendingPathExtension("attempt") }
     static func load(_ account: String) -> Self {
         guard let url = try? url(account), let data = try? Data(contentsOf: url), let value = try? JSONDecoder().decode(Self.self, from: data) else { return Self() }
@@ -654,20 +662,24 @@ public actor UsageService {
         do {
             try checkPermission()
             guard var credentials = try SharedStorage.credentials(account: id, route: route) else { throw ServiceError.loginRequired }
+            var rotated = false
             if credentials.expiresAt.timeIntervalSinceNow < 120 {
                 try checkPermission()
                 credentials = try await api.refresh(credentials)
                 // Save a completed rotation before observing cancellation/revocation.
-                let rotated = credentials
-                try RotationPersistence.save { try SharedStorage.save(rotated, account: id, route: route) }
+                let fresh = credentials
+                try RotationPersistence.save { try SharedStorage.save(fresh, account: id, route: route) }
+                rotated = true
             }
             let usage: UsageResponse
             do { try checkPermission(); usage = try await api.usage(credentials) }
-            catch ServiceError.http(401) {
+            // A token minted moments ago being refused is not an expiry: rotating again would only
+            // burn another refresh token, so the 401 surfaces as-is.
+            catch ServiceError.http(401) where !rotated {
                 try checkPermission()
                 credentials = try await api.refresh(credentials)
-                let rotated = credentials
-                try RotationPersistence.save { try SharedStorage.save(rotated, account: id, route: route) }
+                let fresh = credentials
+                try RotationPersistence.save { try SharedStorage.save(fresh, account: id, route: route) }
                 try checkPermission()
                 usage = try await api.usage(credentials)
             }

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Package private-ID unsigned build 30, rejecting stale or signed payloads.
+"""Package private-ID unsigned build 31, rejecting stale or signed payloads.
+
+Build 31: the device-code login keeps polling through dropped connections, 429 and 5xx while
+the user is still approving (the single-use code exchange stays fatal); a 401 on a token minted
+moments ago no longer rotates a second time; the widget timeline serves a cache under 5 minutes
+old instead of re-fetching right after the App's own refresh, and each slot reads only its own
+provider's cache.
 
 Build 30: preserve Claude cache during legacy cleanup, separate forbidden responses from
 expired tokens, disclose widget access renewal, attribute refresh errors to each account,
@@ -37,7 +43,7 @@ import subprocess
 import zipfile
 
 root = Path(__file__).resolve().parents[1]
-app = root / 'Build30Direct/Build/Products/Release-iphoneos/CodexUsage.app'
+app = root / 'Build31Direct/Build/Products/Release-iphoneos/CodexUsage.app'
 appex = app / 'PlugIns/CodexUsageWidget.appex'
 # Private identifiers come from the untracked Configuration/Private.xcconfig, never from this file.
 private = {}
@@ -52,7 +58,7 @@ for bundle, bundle_id in zip((app, appex), ids):
     assert not (bundle / '_CodeSignature').exists(), bundle
     assert not (bundle / 'embedded.mobileprovision').exists(), bundle
     info = plistlib.loads((bundle / 'Info.plist').read_bytes())
-    assert (info['CFBundleIdentifier'], info['CFBundleVersion'], info['CFBundleShortVersionString'], info['MinimumOSVersion']) == (bundle_id, '30', '2.0', '17.0'), 'Unexpected build identity/version'
+    assert (info['CFBundleIdentifier'], info['CFBundleVersion'], info['CFBundleShortVersionString'], info['MinimumOSVersion']) == (bundle_id, '31', '2.0', '17.0'), 'Unexpected build identity/version'
     assert '$(' not in str(info)
     executable = bundle / info['CFBundleExecutable']
     assert 'arm64' in subprocess.check_output(['lipo', '-archs', str(executable)], text=True)
@@ -110,7 +116,7 @@ assert '无缓存 · 打开 App 更新授权'.encode() in widget
 for gone in ['连接 Claude 账号', '登录页面由网站提供', '已阻止非 Claude 或已知登录提供商']:
     assert gone.encode() not in app_binary, gone
 
-out = root / 'Dist/CodexUsage-widget-build30-unsigned.ipa'
+out = root / 'Dist/CodexUsage-widget-build31-unsigned.ipa'
 out.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as archive:
     for path in app.rglob('*'):
@@ -120,7 +126,7 @@ with zipfile.ZipFile(out) as archive:
     assert archive.testzip() is None
     for suffix, bundle_id in (('', ids[0]), ('PlugIns/CodexUsageWidget.appex/', ids[1])):
         info = plistlib.loads(archive.read('Payload/CodexUsage.app/' + suffix + 'Info.plist'))
-        assert (info['CFBundleIdentifier'], info['CFBundleVersion'], info['CFBundleShortVersionString']) == (bundle_id, '30', '2.0')
+        assert (info['CFBundleIdentifier'], info['CFBundleVersion'], info['CFBundleShortVersionString']) == (bundle_id, '31', '2.0')
 print(out)
 print('sha256:', hashlib.sha256(out.read_bytes()).hexdigest())
-print('bundle IDs preserved from private config; version: 2.0 (30)')
+print('bundle IDs preserved from private config; version: 2.0 (31)')

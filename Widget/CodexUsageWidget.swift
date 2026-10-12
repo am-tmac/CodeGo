@@ -36,15 +36,24 @@ struct DashboardColumn {
     let failed: Bool
     let refreshing: Bool
     var needsAppRefresh = false
-    static func load(_ id: String?, defaultProvider: String = "codex") -> Self {
-        let row = DashboardStore.accounts().first { $0.id == id }
+    var updatedAt: Date? {
+        switch provider {
+        case "deepseek": return balance?.updatedAt
+        case "antigravity": return antigravity?.updatedAt
+        case "claude": return claude?.updatedAt
+        default: return usage?.updatedAt
+        }
+    }
+    static func load(_ id: String?, defaultProvider: String = "codex", accounts: [DashboardAccount] = DashboardStore.accounts()) -> Self {
+        let row = accounts.first { $0.id == id }
         let provider = row?.provider ?? defaultProvider
         let attempt = id.map { WidgetRefreshAttempt.load($0) }
         let needsAppRefresh = provider == "claude" && attempt?.requiresAppRefresh == true
+        // Only the slot's own provider cache is read; the others would always be misses.
         return Self(id: id, provider: provider, title: row?.title ?? "未选择 / 账号已移除",
-                    usage: id.flatMap { SharedStorage.snapshot(account: $0) },
-                    balance: id.flatMap { DeepSeekStore.snapshot($0) },
-                    antigravity: id.flatMap { _ in AntigravityStore.snapshot() },
+                    usage: provider == "codex" ? id.flatMap { SharedStorage.snapshot(account: $0) } : nil,
+                    balance: provider == "deepseek" ? id.flatMap { DeepSeekStore.snapshot($0) } : nil,
+                    antigravity: provider == "antigravity" && id != nil ? AntigravityStore.snapshot() : nil,
                     claude: provider == "claude" ? ClaudeStore.snapshot() : nil,
                     canRefresh: !needsAppRefresh && (id.map { DashboardStore.canRefreshAnyProvider($0) } ?? false),
                     failed: attempt?.failed ?? false, refreshing: attempt?.isRefreshing(at: Date()) ?? false,
@@ -63,9 +72,11 @@ struct UsageProvider: AppIntentTimelineProvider {
         UsageEntry(date: Date(), left: .load(nil), right: .load(nil, defaultProvider: "deepseek"))
     }
     func entry(_ configuration: DashboardConfiguration) -> UsageEntry {
-        let leftID = configuration.leftAccount?.id ?? SharedStorage.selectedAccount() ?? DashboardStore.accounts().first?.id
-        let rightID = configuration.rightAccount?.id ?? DashboardStore.accounts().first(where: { $0.id != leftID && $0.provider == "deepseek" })?.id ?? DashboardStore.accounts().first(where: { $0.id != leftID })?.id
-        return UsageEntry(date: Date(), left: .load(leftID), right: .load(rightID, defaultProvider: "deepseek"), theme: ThemePreference.load(), display: UsageDisplay.load())
+        let accounts = DashboardStore.accounts()
+        let leftID = configuration.leftAccount?.id ?? SharedStorage.selectedAccount() ?? accounts.first?.id
+        let rightID = configuration.rightAccount?.id ?? accounts.first(where: { $0.id != leftID && $0.provider == "deepseek" })?.id ?? accounts.first(where: { $0.id != leftID })?.id
+        return UsageEntry(date: Date(), left: .load(leftID, accounts: accounts), right: .load(rightID, defaultProvider: "deepseek", accounts: accounts),
+                          theme: ThemePreference.load(), display: UsageDisplay.load())
     }
     func snapshot(for configuration: DashboardConfiguration, in context: Context) async -> UsageEntry {
         SharedStorage.recordWidgetDiagnostics()
@@ -78,6 +89,7 @@ struct UsageProvider: AppIntentTimelineProvider {
         // Both columns refresh concurrently (build 28); each keeps its own lease, throttle and cache.
         let targets = RefreshTargets.unique(columns.map { $0.id }).compactMap { id -> (String, String)? in
             guard let column = columns.first(where: { $0.id == id }), column.canRefresh, !column.refreshing else { return nil }
+            guard WidgetRefreshAttempt.timelineShouldFetch(updatedAt: column.updatedAt) else { return nil }
             return (id, column.provider)
         }
         await withTaskGroup(of: Void.self) { group in
@@ -88,7 +100,7 @@ struct UsageProvider: AppIntentTimelineProvider {
                 }
             }
         }
-        return Timeline(entries: [entry(configuration)], policy: .after(Date().addingTimeInterval(900)))
+        return Timeline(entries: [targets.isEmpty ? cached : entry(configuration)], policy: .after(Date().addingTimeInterval(900)))
     }
 }
 struct DashboardWidgetView: View {

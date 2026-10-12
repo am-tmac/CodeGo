@@ -820,5 +820,19 @@ final class StorageTests: XCTestCase {
         XCTAssertEqual(try SharedStorage.credentials(account: account)?.email, "stored@example.com")
         XCTAssertEqual((try XCTUnwrap(try storedRecord(account)))["email"] as? String, "stored@example.com")
     }
+    func testUnauthorizedRightAfterRotationDoesNotRotateAgain() async throws {
+        guard try SharedStorage.accountIDs().isEmpty else { throw XCTSkip("Existing credentials") }
+        defer { try? SharedStorage.clear() }
+        // Already expired, so the refresh path rotates before the first usage request.
+        try await UsageService.shared.install(Credentials(response: TokenResponse(accessToken: "unit-expired", refreshToken: "unit-r", idToken: nil, expiresIn: -10)))
+        let id = try XCTUnwrap(SharedStorage.selectedAccount())
+        let transport = ScriptedTransport([(#"{"access_token":"unit-new","refresh_token":"unit-r2","expires_in":3600}"#, 200), ("{}", 401)])
+        let service = UsageService(api: AuthAPI(transport: transport))
+        do { _ = try await service.refresh(account: id, widget: false, permission: { true }); XCTFail("Expected 401") }
+        catch ServiceError.http(401) {} catch { XCTFail("Unexpected \(error)") }
+        let count = await transport.requests.count
+        XCTAssertEqual(count, 2)
+        XCTAssertEqual(try SharedStorage.credentials(account: id)?.refreshToken, "unit-r2")
+    }
 }
 #endif
