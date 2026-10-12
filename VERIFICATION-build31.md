@@ -21,7 +21,7 @@
 - `python3 Tests/widget_refresh_contract.py -v`: 19 passed (`Logs/build31-contract.log`).
 - `python3 Tests/signing_configuration_test.py`: 1 passed. `python3 Tests/build9_contract.py`: 3 passed.
 - `swift test`: 87 tests / 0 failures (`Logs/build31-swift.log`), including 5 new protocol tests (transient poll recovery, client error fatal, exchange not retried, failure classification, timeline freshness gate).
-- Signed simulator suite: 82 tests / 0 failures (`Logs/build31-simulator.log`; two earlier attempts were refused by the simulator with "Busy / preflight checks" before any test ran, passed after a simulator reboot), including the new iOS-only test that a 401 right after rotation does not rotate again.
+- Signed simulator suite: 82 tests / 0 failures (`Logs/build31-simulator.log`; two earlier attempts were refused by the simulator with "Busy / preflight checks" before any test ran, passed after a simulator reboot), including the new iOS-only test that a 401 right after rotation does not rotate again (`testUnauthorizedRightAfterRotationDoesNotRotateAgain`). Re-run on the committed tree (`ec60835`): 82 tests / 0 failures, same new test passed (`Logs/build31-simulator-rerun.log`).
 - Device Release build succeeded (`Logs/build31-release.log`); packager succeeded (`Logs/build31-package.log`) with the build 30 binary markers plus version 2.0 (31). assetutil printed its usual duplicate-class diagnostic and exited successfully.
 - `git diff --check` passed.
 
