@@ -70,6 +70,7 @@ enum WidgetRefresh {
         case "deepseek": _ = try await DeepSeekService.shared.refresh(id: id)
         case "claude": _ = try await ClaudeService.shared.refresh()
         case "antigravity": _ = try await AntigravityService.shared.refresh()
+        case "tokensci": return // Cache-only: opening 用量 refreshes through the App model.
         default: _ = try await UsageService.shared.refresh(account: id, widget: true, permission: { DashboardStore.canRefresh(id, provider: "codex") })
         }
     }

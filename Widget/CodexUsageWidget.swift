@@ -32,6 +32,7 @@ struct DashboardColumn {
     let balance: DeepSeekSnapshot?
     let antigravity: AntigravitySnapshot?
     let claude: ClaudeSnapshot?
+    let tokensci: TokensCISnapshot?
     let canRefresh: Bool
     let failed: Bool
     let refreshing: Bool
@@ -41,13 +42,14 @@ struct DashboardColumn {
         case "deepseek": return balance?.updatedAt
         case "antigravity": return antigravity?.updatedAt
         case "claude": return claude?.updatedAt
+        case "tokensci": return tokensci?.dataUpdatedAt
         default: return usage?.updatedAt
         }
     }
     static func load(_ id: String?, defaultProvider: String = "codex", accounts: [DashboardAccount] = DashboardStore.accounts()) -> Self {
         let row = accounts.first { $0.id == id }
         let provider = row?.provider ?? defaultProvider
-        let attempt = id.map { WidgetRefreshAttempt.load($0) }
+        let attempt = id.map { WidgetRefreshAttempt.load(provider == "tokensci" ? "tokensci:" + $0 : $0) }
         let needsAppRefresh = provider == "claude" && attempt?.requiresAppRefresh == true
         // Only the slot's own provider cache is read; the others would always be misses.
         return Self(id: id, provider: provider, title: row?.title ?? "未选择 / 账号已移除",
@@ -55,7 +57,8 @@ struct DashboardColumn {
                     balance: provider == "deepseek" ? id.flatMap { DeepSeekStore.snapshot($0) } : nil,
                     antigravity: provider == "antigravity" && id != nil ? AntigravityStore.snapshot() : nil,
                     claude: provider == "claude" ? ClaudeStore.snapshot() : nil,
-                    canRefresh: !needsAppRefresh && (id.map { DashboardStore.canRefreshAnyProvider($0) } ?? false),
+                    tokensci: provider == "tokensci" ? id.flatMap { TokensCIStore.snapshot($0) } : nil,
+                    canRefresh: provider != "tokensci" && !needsAppRefresh && (id.map { DashboardStore.canRefreshAnyProvider($0) } ?? false),
                     failed: attempt?.failed ?? false, refreshing: attempt?.isRefreshing(at: Date()) ?? false,
                     needsAppRefresh: needsAppRefresh)
     }
@@ -121,6 +124,8 @@ struct DashboardWidgetView: View {
         } else if value.provider == "claude" {
             ClaudeCompactView(snapshot: value.claude, failed: value.failed, cacheOnly: !value.canRefresh, palette: palette,
                               display: entry.display, needsAppRefresh: value.needsAppRefresh)
+        } else if value.provider == "tokensci" {
+            TokensCICompactView(snapshot: value.tokensci, palette: palette)
         } else {
             CompactUsageView(snapshot: value.usage, failed: value.failed, refreshing: value.refreshing,
                              sharingUnavailable: !SharedStorage.cacheSharingAvailable, cacheOnly: !value.canRefresh,
@@ -190,7 +195,7 @@ struct DashboardWidgetRoot: View {
             .containerBackground(palette.background, for: .widget)
     }
 }
-@main struct CodexUsageWidget: Widget {
+struct CodexUsageWidget: Widget {
     let kind = "CodexUsageWidget"
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: DashboardConfiguration.self, provider: UsageProvider()) { entry in
@@ -201,5 +206,190 @@ struct DashboardWidgetRoot: View {
             // The stacked DeepSeek card is a full-bleed card stack: it draws its own 8pt/16pt
             // insets. Every other layout re-applies build 14's 16pt margin in the view.
             .contentMarginsDisabled()
+    }
+}
+
+// MARK: - tokens.ci
+
+/// Slot rendering: one service inside the shared dashboard widget.
+struct TokensCICompactView: View {
+    let snapshot: TokensCISnapshot?
+    var palette: ThemePalette = .dark
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("tokens.ci").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.secondary)
+            if let snapshot {
+                Text(TokensCIFormat.compact(snapshot.todayTokens))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(palette.primary).lineLimit(1).minimumScaleFactor(0.6)
+                Text(snapshot.periodLabel).font(.system(size: 10)).foregroundStyle(palette.secondary)
+                Spacer(minLength: 0)
+                Text(TokensCIFormat.money(snapshot.todayCost))
+                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.primary)
+                Text("费用 · 更新于 \(snapshot.dataUpdatedAt.formatted(date: .omitted, time: .shortened))")
+                    .font(.system(size: 9)).foregroundStyle(palette.secondary).lineLimit(1)
+            } else {
+                Text("暂无数据").font(.system(size: 12)).foregroundStyle(palette.secondary)
+                Spacer(minLength: 0)
+                Text("打开 App 刷新").font(.system(size: 9)).foregroundStyle(palette.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+/// The dedicated tokens.ci widget: the Nowdex layout, two panels, medium size.
+struct TokensCIWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let snapshot: TokensCISnapshot?
+    var palette: ThemePalette = .dark
+
+    var body: some View {
+        Group {
+            if let snapshot, family == .systemMedium {
+                medium(snapshot)
+            } else if let snapshot {
+                compact(snapshot)
+            } else {
+                empty
+            }
+        }
+        .padding(16)
+    }
+
+    private func medium(_ value: TokensCISnapshot) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(TokensCIFormat.compact(value.todayTokens))
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundStyle(palette.primary).lineLimit(1).minimumScaleFactor(0.5)
+                Text(value.periodLabel).font(.system(size: 10)).foregroundStyle(palette.secondary)
+                Spacer(minLength: 8)
+                Text(TokensCIFormat.money(value.todayCost))
+                    .font(.system(size: 19, weight: .semibold)).foregroundStyle(palette.primary).lineLimit(1)
+                Text("估算费用 · 非账单").font(.system(size: 10)).foregroundStyle(palette.secondary)
+                Spacer(minLength: 8)
+                Text("上报 \(value.dataUpdatedAt.formatted(date: .numeric, time: .omitted))")
+                    .font(.system(size: 9)).foregroundStyle(palette.secondary).lineLimit(1)
+                Text("仅缓存 · 打开 App 更新").font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 5) {
+                ForEach(Array(value.clients.prefix(2).enumerated()), id: \.offset) { index, client in
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(client.displayName).font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(palette.primary).lineLimit(1)
+                            Spacer(minLength: 6)
+                            Text(TokensCIFormat.compact(client.tokens)).font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(palette.primary).lineLimit(1)
+                        }
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(client.topModel?.name ?? "—").font(.system(size: 9, design: .monospaced))
+                                .foregroundStyle(palette.secondary).lineLimit(1)
+                            Spacer(minLength: 6)
+                            Text(TokensCIFormat.money(client.topModel?.cost ?? client.cost) + (client.topModel == nil ? " 客户端" : "")).font(.system(size: 9))
+                                .foregroundStyle(palette.secondary).lineLimit(1)
+                        }
+                        GeometryReader { proxy in
+                            let share = value.todayTokens > 0 ? client.tokens / value.todayTokens : 0
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(palette.track)
+                                Capsule().fill(palette.primary.opacity(index == 0 ? 0.92 : 0.55))
+                                    .frame(width: proxy.size.width * min(1, max(0, share)))
+                            }
+                        }.frame(height: 3)
+                    }
+                }
+                if value.clients.isEmpty {
+                    Text("暂无客户端明细").font(.system(size: 10)).foregroundStyle(palette.secondary)
+                }
+                Spacer(minLength: 0)
+                Text("累计 " + TokensCIFormat.compact(value.totalTokens) + " · 缓存 " + TokensCIFormat.percent(value.cacheHitRate))
+                    .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.7)
+                Text("月预估 — · 不外推").font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1)
+            }
+            .padding(8)
+            .background(palette.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func compact(_ value: TokensCISnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(TokensCIFormat.compact(value.todayTokens))
+                .font(.system(size: 26, weight: .bold, design: .rounded)).foregroundStyle(palette.primary)
+            Text(value.periodLabel).font(.system(size: 10)).foregroundStyle(palette.secondary)
+            Spacer(minLength: 0)
+            Text(TokensCIFormat.money(value.todayCost) + " · 估算").font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(palette.primary)
+            Text("上报 \(value.dataUpdatedAt.formatted(date: .numeric, time: .omitted))")
+                .font(.system(size: 9)).foregroundStyle(palette.secondary)
+            Text("仅缓存 · 打开 App 更新").font(.system(size: 8)).foregroundStyle(palette.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var empty: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("tokens.ci").font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.secondary)
+            Spacer(minLength: 0)
+            Text("打开 App 连接账号").font(.system(size: 10)).foregroundStyle(palette.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+struct TokensCIEntry: TimelineEntry {
+    let date: Date
+    let snapshot: TokensCISnapshot?
+    var theme: ThemePreference = .system
+}
+
+struct TokensCIWidgetProvider: TimelineProvider {
+    private func current() -> TokensCISnapshot? {
+        DashboardStore.accounts().first { $0.provider == "tokensci" }.flatMap { TokensCIStore.snapshot($0.id) }
+    }
+    func placeholder(in context: Context) -> TokensCIEntry {
+        TokensCIEntry(date: Date(), snapshot: nil)
+    }
+    func getSnapshot(in context: Context, completion: @escaping (TokensCIEntry) -> Void) {
+        completion(TokensCIEntry(date: Date(), snapshot: current(), theme: ThemePreference.load()))
+    }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<TokensCIEntry>) -> Void) {
+        let entry = TokensCIEntry(date: Date(), snapshot: current(), theme: ThemePreference.load())
+        completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900))))
+    }
+}
+
+struct TokensCIWidget: Widget {
+    let kind = "TokensCIWidget"
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TokensCIWidgetProvider()) { entry in
+            TokensCIWidgetRoot(entry: entry)
+        }
+        .configurationDisplayName("tokens.ci 用量")
+        .description("今日 Token、费用与客户端拆分；数据由电脑上的 tokens CLI 上报，组件只读缓存。")
+        .supportedFamilies([.systemSmall, .systemMedium])
+        .contentMarginsDisabled()
+    }
+}
+
+struct TokensCIWidgetRoot: View {
+    @Environment(\.colorScheme) private var scheme
+    let entry: TokensCIEntry
+    var body: some View {
+        let palette = ThemePalette.resolve(entry.theme, scheme: scheme)
+        TokensCIWidgetView(snapshot: entry.snapshot, palette: palette)
+            .containerBackground(palette.background, for: .widget)
+            .widgetURL(URL(string: "codexusage://usage"))
+    }
+}
+
+@main struct CodexUsageWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        TokensCIWidget()
+        CodexUsageWidget()
     }
 }

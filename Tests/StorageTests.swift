@@ -52,6 +52,44 @@ final class StorageTests: XCTestCase {
         try FileManager.default.removeItem(at: isolatedContainer)
     }
 
+    @MainActor func testTokensCIRefreshIsTargetedKeepsCacheAndAttributesFailures() async throws {
+        let data = Data(#"{"user":{"username":"fixture"},"stats":{"totalTokens":100,"totalCost":1},"clients":[],"contributions":[]}"#.utf8)
+        let value = try await TokensCIAPI(transport: ScriptedTransport([(String(decoding: data, as: UTF8.self), 200)])).profile(username: "fixture", token: "tkr_fixture_only")
+        let model = UsageModel(loadStoredAccounts: false, fetchers: AppRefreshFetchers(
+            codex: { _ in XCTFail("Targeted tokens refresh must not fetch quota"); throw ServiceError.loginRequired },
+            tokensCI: { id in if id == "first" { return value }; throw TokensCIError.unauthorized }))
+        model.accounts = ["quota"]
+        model.tokensCIIDs = ["first", "second"]
+        model.tokensCISnapshots = ["second": value]
+        model.refreshErrors[.tokensCI("first")] = "old"
+        model.refreshErrors[.tokensCI("second")] = "other"
+        await model.refresh(target: .tokensCI("first"))
+        XCTAssertEqual(model.tokensCISnapshots["first"], value)
+        XCTAssertNil(model.refreshErrors[.tokensCI("first")])
+        XCTAssertEqual(model.refreshErrors[.tokensCI("second")], "other")
+        await model.refresh(target: .tokensCI("second"))
+        XCTAssertEqual(model.tokensCISnapshots["second"], value)
+        XCTAssertTrue(model.refreshErrors[.tokensCI("second")]?.contains("Read token") == true)
+        XCTAssertNil(model.message)
+    }
+
+    func testTokensCIServiceErrorRetainsExactCacheBytesAndPersistsFailure() async throws {
+        let name = "unit-tokensci"
+        defer { try? TokensCIStore.remove(name) }
+        do { try TokensCIStore.saveToken("tkr_fixture_only", username: name) }
+        catch { throw XCTSkip("Synthetic token unavailable in simulator keychain") }
+        let json = #"{"user":{"username":"unit-tokensci"},"stats":{"totalTokens":100,"totalCost":1},"clients":[],"contributions":[]}"#
+        let api = TokensCIAPI(transport: ScriptedTransport([(json, 200), ("{}", 500)]))
+        let service = TokensCIService(api: api)
+        _ = try await service.refresh(username: name, widget: false)
+        let url = try TokensCIStore.snapshotURL(name)
+        let before = try Data(contentsOf: url)
+        do { _ = try await service.refresh(username: name, widget: false); XCTFail("Expected upstream failure") }
+        catch { XCTAssertTrue(error is TokensCIError) }
+        XCTAssertEqual(try Data(contentsOf: url), before)
+        XCTAssertTrue(WidgetRefreshAttempt.load("tokensci:" + name).failed)
+    }
+
     @MainActor func testAppRefreshKeepsFailuresOnTheirOwnCardsAndPreservesCache() async throws {
         let old = UsageSnapshot(usage: try JSONDecoder().decode(UsageResponse.self, from: Data(#"{"rate_limit":null}"#.utf8)), updatedAt: Date(timeIntervalSince1970: 42))
         let model = UsageModel(loadStoredAccounts: false, fetchers: AppRefreshFetchers(

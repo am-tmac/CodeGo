@@ -13,6 +13,7 @@ struct DashboardAccount: Codable, Equatable, Identifiable {
         case "deepseek": name = "DeepSeek"
         case "antigravity": name = "Antigravity"
         case "claude": name = "Claude"
+        case "tokensci": name = "tokens.ci"
         default: name = "Codex"
         }
         return "\(name) · 账号 \(ordinal)"
@@ -31,6 +32,10 @@ enum DashboardStore {
         }
         rows += try DeepSeekStore.ids().enumerated().map { index, id in
             DashboardAccount(id: id, provider: "deepseek", ordinal: index + 1, credentialGroup: DeepSeekStore.credentialGroup(id))
+        }
+        // tokens.ci profiles are keyed by username, which is also the account id the widget uses.
+        rows += TokensCIStore.ids().enumerated().map { index, id in
+            DashboardAccount(id: id, provider: "tokensci", ordinal: index + 1, credentialGroup: nil) // Intentionally cache-only.
         }
         // Antigravity publishes one row so the widget picker can point a slot at it. Its credential
         // group is the group the token was written under.

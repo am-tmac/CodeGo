@@ -152,8 +152,15 @@ struct ResetLine: View {
 /// empty state and the per-card "重新授权" menu items open a specific one).
 enum ConnectEntry: Identifiable, Hashable {
     case picker
+    case tokensCI
     case service(ServiceBrand)
-    var id: String { if case .service(let brand) = self { return brand.rawValue }; return "picker" }
+    var id: String {
+        switch self {
+        case .picker: return "picker"
+        case .tokensCI: return "tokensCI"
+        case .service(let brand): return brand.rawValue
+        }
+    }
 }
 
 struct ConnectSheet: View {

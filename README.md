@@ -4,6 +4,34 @@
 
 独立 SwiftUI iOS 17+ 自用 App：iPhone 自行设备代码 OAuth 登录、直接读取 Codex 额度，在共享签名获授权时 WidgetKit 自行请求更新。没有 Mac 后端、CLIProxyAPI、CLI、Cookie 导入或第三方运行时依赖。没有读取/复制电脑已有的 OAuth 凭据。
 
+## 4.1 / build 38：移除用量页顶部说明行
+
+- 用量页顶部「只读用量由电脑上的 tokens CLI 上报…」整段说明已移除，账号信息直接作为页面开头；其余区块、统计口径、状态页、设置页与小组件均未改动。
+- 构建：`python3 Scripts/build38_release.py` → `python3 Scripts/package_widget_build38.py`。实测与边界见 `VERIFICATION-build38.md`。
+
+## 4.0 / build 37：完整 tokens.ci 用量分析（历史）
+
+- 已实现账号身份、累计与时段总量、可选日期热图、同日客户端、四项分析、原生 Charts 日堆叠 Token/费用切换、7/30/90 天、Provider/模型展开、Token 组成及一年星期习惯/峰值日。
+- 真实 `contributions` 计算；最近上报日明确标注，不冒充今日。月度预估不可用，消息口径冲突显示 —，缓存读取占比不是请求命中率。
+- 历史保存在 App 私有 Application Support，共享快照不含历史；旧缓存缺少历史时提示刷新。小组件源文件与 build36 字节相同，Charts 仅链接主 App。
+- 构建：`python3 Scripts/build37_release.py` → `python3 Scripts/package_widget_build37.py`。实测与边界见 `VERIFICATION-build37.md`；未提交/推送。
+
+## 3.2 / build 36：同日用量对齐（历史）
+
+- 今日以设备本地日历日期匹配接口 `contributions[].date`；总量、客户端和模型来自同一组日记录，不再混入历史客户端累计。模型旁显示该模型费用；条形分母为同日总 Token。
+- 这不是 UTC 日换算：当前 CLI 按固定分桶时区生成日期，接口只返回整日桶、不带可靠分桶时区。界面明确标「上报日」；电脑时区须与设备一致。旧数据或异区桶无法精确拆分，不用 `timestampMs` 的首条消息时间移动整桶。
+- 历史缓存保留；跨日旧值标「缓存日 YYYY-MM-DD」而非今日；升级前混期缓存的日数据须刷新，累计保留。无今日记录时显示 0、无客户端。
+- 累计 Token / 累计缓存读取占比明确标累计。月预估维持不外推：未找到 Nowdex 的公开计算公式，不把截图的近30天指标冒充已验证算法。
+- 构建：`python3 Scripts/build36_release.py` → `python3 Scripts/package_widget_build36.py`；交付与来源见 `VERIFICATION-build36.md`。SwiftPM 94、签名模拟器 Debug 84、静态契约 19+4+2+2+3 及签名检查通过。
+
+### 3.1 / build 35：用量连接入口（历史）
+
+- 用量页不再内嵌用户名/read token 表单；标题栏刷新左侧的 `+` 和空状态的「连接 tokens.ci」直接打开专用 sheet，不进入订阅额度服务选择器。
+- 复用唯一的 `.sheet(item:)`，关闭/进入后台清空未提交字段与同意状态。原数据卡、指标、每账号刷新/移除/错误保持不变。
+- tokens.ci 小组件仍只读缓存；约 15 分钟 timeline 请求只重读缓存，不联网，更新数据需要打开 App。
+- 当前构建：`python3 Scripts/build35_release.py` → `python3 Scripts/package_widget_build35.py`。产物与实测记录见 `VERIFICATION-build35.md`；签名标识来自本机私有配置。
+- 回归：`python3 Tests/tokensci_navigation_contract.py -v`、既有静态契约、`swift test`、ad-hoc 签名模拟器测试和 iphoneos Release。真机重签/覆盖安装/触摸与布局仍需设备确认。
+
 ## 打开与真机签名
 
 1. 打开 `CodexUsage.xcodeproj`，选择 `CodexUsage` scheme。
@@ -99,7 +127,7 @@ xcodebuild -project CodexUsage.xcodeproj -scheme CodexUsage \
 - 重签更换 Team/Bundle ID 可能导致旧钥匙串不可访问。此前 OAuth 已成功但保存失败的用户安装新版后需重新登录；保存失败提示明确说明授权完成、解锁/检查签名/重新登录。
 - 多账号：点「添加账号 / 重新授权」，在官方授权页退出/切换账号后授权第二个账号；不要继续使用浏览器里第一个账号的会话。App 使用明确的本机账号序号/标识，不声称未验证的邮箱身份。共享可用时点「用于组件」选择唯一的组件账号；本版不是每个 Widget 实例独立选择账号。
 - App 与 Widget 跟随系统深浅色，使用语义背景与前景色。iOS 26+ 登录/添加按钮使用原生 Liquid Glass（glassProminent），iOS 17–25 使用常规按钮和 material 回退。额度数据不覆盖玻璃，Widget 保留 Codex / 5h / 7d 的紧凑布局；没有调用不支持的 Widget 玻璃接口。没有额外外观设置开关。
-- 当前包：`Dist/CodexUsage-widget-build31-unsigned.ipa`，含 Widget，未签名，须自行重签安装；模拟器测试不能代替购买证书下的真机 OAuth、联网刷新和触摸验收。
+- 当前包：`~/Downloads/CodexUsage-3.2-build36-tokensci-unsigned.ipa`，含 Widget，未签名，须自行重签安装；模拟器测试不能代替购买证书下的真机 OAuth、联网刷新和触摸验收。
 
 ### 旧版变更摘要（已清理旧版产物）
 
@@ -107,11 +135,19 @@ xcodebuild -project CodexUsage.xcodeproj -scheme CodexUsage \
 - build 23：Codex 的刷新控件移到组件整体右上角；DeepSeek 按钮曾上移过多，build 24 已修正。
 - build 22：把组件刷新授权的严格握手与经风险确认的手动授权分开；配置的 Keychain 组不代表真实 entitlement，只使用本机实测的精确组。Claude 登录移到状态页 ChatGPT 登录下方。
 - build 21：已授权时是组件内 AppIntent 真刷新；未授权时为不同外观的「打开 App」控件，不把打开 App 伪装成刷新。Claude 改为 OAuth 账号登录；删除旧的 WebKit 会话和手动 sessionKey 路径。
-- 当前构建请用 `Scripts/package_widget_build31.py`（Release 构建需 `-xcconfig Configuration/Private.xcconfig`），目标输出目录为 `Build31Direct`；私有 ID 只从 `Private.xcconfig` 读取；重建前先运行静态契约、模拟器测试与 iphoneos Release 构建。详情见 `VERIFICATION-build31.md`。
+- 历史 build34 构建：`python3 Scripts/build34_release.py`，然后 `python3 Scripts/package_widget_build34.py`；使用 `Build34Direct`，私有 ID 只从 `Private.xcconfig` 读取并显式覆盖工程设置。详情见 `VERIFICATION-build34.md`。
 
 ## 当前版本
 
-当前源码对应 **2.0 / build 31**。在 build 30 基础上修复登录与刷新的可靠性问题，界面与组件外观不变：
+当前源码对应 **3.2 / build 36**。底栏依次为「状态 / 用量 / 设置」；状态页原有四类账号卡、登录和刷新逻辑保留，用量页独立提供 tokens.ci 连接与只读用量。
+
+- 修复旧实现把顶层 `clients: string[]` 当对象解码的问题，实际客户端/模型统计来自 `contributions[].clients`。保存了不含凭据的公开 API 完整响应供回归重放。
+- 今日按设备本地日历日期匹配上报日，缺记录显示 0，不把最后上报日冒充今日；费用是模型定价估算、不是账单。上传稀疏，月预估不外推，明确显示数据不足；缓存百分比定义为缓存读取 Token / 总 Token。
+- 错误归属每个账号，显示于对应卡片，保留缓存；说明换行。tokens.ci 小组件真实 16pt 内边距、跟随共享主题，仅缓存并明确打开 App 更新。
+- 验证：核心 91、模拟器 84、静态契约 19+4+3+1 项通过；8 个真实 SwiftUI 组件渲染。完整边界与 SHA-256 见 `VERIFICATION-build34.md`。
+- 后续版本约定：修复营销版本 +0.1（3.1、3.2），重大功能 +1（4.0）；内部 build 继续单调递增。
+
+build 31 保留的登录可靠性修复：
 
 - ChatGPT 设备代码登录在等待授权期间遇到断网、429 或 5xx 时继续轮询（429 后放慢），15 分钟仍超时；授权码换取令牌只能用一次，失败仍直接报错。
 - 刚轮换出的 Codex 令牌若请求用量即返回 401，不再第二次轮换刷新令牌。

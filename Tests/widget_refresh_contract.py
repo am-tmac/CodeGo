@@ -57,7 +57,9 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('accessibilityLabel("打开 App 刷新")', cache_only)
         self.assertNotIn('RefreshDashboardIntent', cache_only)
         # No root widgetURL: no tap can be routed around the AppIntent refresh button.
-        self.assertNotIn('.widgetURL(', widget)
+        # Build 34 adds a dedicated cache-only tokens.ci widget with an explicit open-App route.
+        # The interactive quota dashboard must still have no root link around its intent.
+        self.assertNotIn('.widgetURL(', widget.split('// MARK: - tokens.ci')[0])
         self.assertIn('仅缓存 · 组件无刷新授权，打开 App', views)
         # build 28: slots without refresh permission are filtered out before the concurrent fetch.
         self.assertIn('RefreshTargets.unique([leftID, rightID]).filter {', views)
@@ -355,7 +357,8 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('var slotCanRefresh: Bool { isMedium ? (entry.left.canRefresh || entry.right.canRefresh) : entry.left.canRefresh }', widget)
         self.assertIn('RefreshAffordance(canRefresh: slotCanRefresh,', widget)
         self.assertIn('!slotCanRefresh && (entry.left.needsAppRefresh || (isMedium && entry.right.needsAppRefresh))', widget)
-        self.assertIn('canRefresh: !needsAppRefresh && (id.map', widget)
+        # tokens.ci slots are deliberately cache-only; other slots retain independent gating.
+        self.assertIn('canRefresh: provider != "tokensci" && !needsAppRefresh && (id.map', widget)
         self.assertIn('rightID: isMedium ? entry.right.id : nil', widget)
         self.assertIn('var hasConfiguredAccount: Bool { isMedium ? (entry.left.id != nil || entry.right.id != nil) : entry.left.id != nil }', widget)
         self.assertIn('if hasConfiguredAccount { refreshControl }', widget)

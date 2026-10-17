@@ -2,12 +2,13 @@ import SwiftUI
 import WidgetKit
 
 enum AppRefreshTarget: Hashable {
-    case codex(String), deepSeek(String), antigravity, claude
+    case codex(String), deepSeek(String), antigravity, claude, tokensCI(String)
     var accountID: String {
         switch self {
         case .codex(let id), .deepSeek(let id): return id
         case .antigravity: return AntigravityStore.account
         case .claude: return ClaudeStore.id
+        case .tokensCI(let id): return "tokensci:" + id
         }
     }
 }
@@ -32,6 +33,7 @@ enum AppRefreshError {
         case .deepSeek: return (error as? DeepSeekError)?.localizedDescription ?? "DeepSeek 刷新失败，保留缓存"
         case .antigravity: return (error as? AntigravityError)?.localizedDescription ?? "Antigravity 刷新失败，保留缓存"
         case .claude: return (error as? ClaudeFailure)?.localizedDescription ?? "Claude 刷新失败，保留缓存"
+        case .tokensCI: return (error as? TokensCIError)?.localizedDescription ?? "tokens.ci 刷新失败，保留缓存"
         }
     }
 }
@@ -42,6 +44,7 @@ struct AppRefreshFetchers {
     var deepSeek: @Sendable (String) async throws -> DeepSeekSnapshot = { try await DeepSeekService.shared.refresh(id: $0, widget: false) }
     var antigravity: @Sendable () async throws -> AntigravitySnapshot = { try await AntigravityService.shared.refresh(widget: false) }
     var claude: @Sendable () async throws -> ClaudeSnapshot = { try await ClaudeService.shared.refresh(widget: false) }
+    var tokensCI: @Sendable (String) async throws -> TokensCISnapshot = { try await TokensCIService.shared.refresh(username: $0, widget: false) }
 }
 
 @MainActor final class UsageModel: ObservableObject {
@@ -60,6 +63,8 @@ struct AppRefreshFetchers {
     @Published var antigravityInstalled = false
     @Published var claudeInstalled = false
     @Published var claudeSnapshot: ClaudeSnapshot?
+    @Published var tokensCIIDs: [String] = []
+    @Published var tokensCISnapshots: [String: TokensCISnapshot] = [:]
     @Published var refreshErrors: [AppRefreshTarget: String] = [:]
     private let fetchers: AppRefreshFetchers
     private var refreshFailureDates: [AppRefreshTarget: Date] = [:]
@@ -88,7 +93,9 @@ struct AppRefreshFetchers {
         let nextAntigravityInstalled = AntigravityStore.installed()
         let nextClaudeInstalled = ClaudeStore.installed()
         let nextClaudeSnapshot = ClaudeStore.snapshot()
-        let nextSignedIn = !nextAccounts.isEmpty || !nextDeepSeekIDs.isEmpty || nextAntigravityInstalled || nextClaudeInstalled
+        let nextTokensCIIDs = TokensCIStore.ids()
+        let nextTokensCISnapshots = Dictionary(uniqueKeysWithValues: nextTokensCIIDs.compactMap { id in TokensCIStore.snapshot(id).map { (id, $0) } })
+        let nextSignedIn = !nextAccounts.isEmpty || !nextDeepSeekIDs.isEmpty || nextAntigravityInstalled || nextClaudeInstalled || !nextTokensCIIDs.isEmpty
         // ObservableObject publishes even equal assignments. Cache-only reloads should
         // not invalidate every observing view; retain the existing ownership model.
         if deepSeekIDs != nextDeepSeekIDs { deepSeekIDs = nextDeepSeekIDs }
@@ -101,9 +108,11 @@ struct AppRefreshFetchers {
         if antigravityInstalled != nextAntigravityInstalled { antigravityInstalled = nextAntigravityInstalled }
         if claudeInstalled != nextClaudeInstalled { claudeInstalled = nextClaudeInstalled }
         if claudeSnapshot != nextClaudeSnapshot { claudeSnapshot = nextClaudeSnapshot }
+        if tokensCIIDs != nextTokensCIIDs { tokensCIIDs = nextTokensCIIDs }
+        if tokensCISnapshots != nextTokensCISnapshots { tokensCISnapshots = nextTokensCISnapshots }
         if signedIn != nextSignedIn { signedIn = nextSignedIn }
         reloadRefreshAttempts(targets: nextAccounts.map { .codex($0) } + nextDeepSeekIDs.map { .deepSeek($0) }
-                              + (nextAntigravityInstalled ? [.antigravity] : []) + (nextClaudeInstalled ? [.claude] : []))
+                              + (nextAntigravityInstalled ? [.antigravity] : []) + (nextClaudeInstalled ? [.claude] : []) + nextTokensCIIDs.map { .tokensCI($0) })
     }
     /// Load persisted feedback outside body; equal reloads emit no UI notifications.
     func reloadRefreshAttempts(targets: [AppRefreshTarget]) {
@@ -174,7 +183,7 @@ struct AppRefreshFetchers {
             if background != .invalid { UIApplication.shared.endBackgroundTask(background) }
         }
         enum Result { case codex(String, UsageSnapshot), deepSeek(String, DeepSeekSnapshot), antigravity(AntigravitySnapshot),
-                      claude(ClaudeSnapshot), failed(AppRefreshTarget, String), cancelled }
+                      claude(ClaudeSnapshot), tokensCI(String, TokensCISnapshot), failed(AppRefreshTarget, String), cancelled }
         let selection = target ?? account.map { AppRefreshTarget.codex($0) }
         let full = selection == nil
         let codexIDs: [String]
@@ -183,8 +192,17 @@ struct AppRefreshFetchers {
         if case .deepSeek(let id)? = selection { deepSeek = [id] } else { deepSeek = full ? deepSeekIDs : [] }
         let withAntigravity = selection == .antigravity || (full && antigravityInstalled)
         let withClaude = selection == .claude || (full && claudeInstalled)
+        let tokenIDs: [String]
+        if case .tokensCI(let id)? = selection { tokenIDs = [id] } else { tokenIDs = full ? tokensCIIDs : [] }
         let fetchers = self.fetchers
         await withTaskGroup(of: Result.self) { group in
+            for id in tokenIDs {
+                group.addTask {
+                    do { return .tokensCI(id, try await fetchers.tokensCI(id)) }
+                    catch is CancellationError { return .cancelled }
+                    catch { return .failed(.tokensCI(id), AppRefreshError.text(error, for: .tokensCI(id))) }
+                }
+            }
             for id in codexIDs {
                 group.addTask {
                     do { return .codex(id, try await fetchers.codex(id)) }
@@ -219,6 +237,7 @@ struct AppRefreshFetchers {
                 case let .deepSeek(id, value): balances[id] = value; refreshErrors[.deepSeek(id)] = nil; deepSeekFailed.remove(id)
                 case let .antigravity(value): antigravity = value; refreshErrors[.antigravity] = nil
                 case let .claude(value): claudeSnapshot = value; refreshErrors[.claude] = nil
+                case let .tokensCI(id, value): tokensCISnapshots[id] = value; refreshErrors[.tokensCI(id)] = nil
                 case let .failed(target, text):
                     refreshErrors[target] = text
                     refreshFailureDates[target] = Date()
@@ -477,10 +496,10 @@ struct WidgetAuthState: Sendable {
 }
 
 enum AppTab: String, CaseIterable, Identifiable {
-    case status, settings
+    case status, usage, settings
     var id: String { rawValue }
-    var title: String { self == .status ? "状态" : "设置" }
-    var systemImage: String { self == .status ? "chart.bar.fill" : "gearshape.fill" }
+    var title: String { switch self { case .status: return "状态"; case .usage: return "用量"; case .settings: return "设置" } }
+    var systemImage: String { switch self { case .status: return "chart.bar.fill"; case .usage: return "chart.pie.fill"; case .settings: return "gearshape.fill" } }
 }
 
 struct ContentView: View {
@@ -628,6 +647,9 @@ struct ContentView: View {
             page(list: true) { statusSections }
                 .tabItem { Label(AppTab.status.title, systemImage: AppTab.status.systemImage) }
                 .tag(AppTab.status)
+            page { TokensCIPanel(model: model, onConnect: { connect = .tokensCI }) }
+                .tabItem { Label(AppTab.usage.title, systemImage: AppTab.usage.systemImage) }
+                .tag(AppTab.usage)
             page { settingsSections }
                 .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.systemImage) }
                 .tag(AppTab.settings)
@@ -641,7 +663,12 @@ struct ContentView: View {
             Text("实测组：\(SharedStorage.diagnostics.observedDefaultGroup ?? "未知")。购买证书下，被授权访问同一组的其他 App 可能读取或修改所有账号令牌；service 名称不提供安全隔离。已有默认令牌可能已在此组。本开关不迁移或复制令牌，只允许组件用精确验证组访问所选账号。关闭保留账号并停止新请求，但无法撤回已经发送的请求或泄露的令牌。iOS 仅接受约每 15 分钟刷新请求，不保证时刻；负一屏出现不能强制联网。")
         }
         .sheet(item: $connect) { entry in
-            ConnectSheet(model: model, entry: entry)
+            Group {
+                switch entry {
+                case .tokensCI: TokensCIConnectSheet(model: model)
+                default: ConnectSheet(model: model, entry: entry)
+                }
+            }
                 .preferredColorScheme(theme == .system ? nil : (theme == .light ? .light : .dark))
         }
         .refreshable { if model.signedIn { await model.refresh() } }
@@ -650,7 +677,12 @@ struct ContentView: View {
             await reloadAuth()
             if model.signedIn { await model.autoRefresh() }
         }
-        .onOpenURL { url in if url.scheme == "codexusage" && model.signedIn { Task { await model.refresh() } } }
+        .onOpenURL { url in
+            if url.scheme == "codexusage" {
+                if url.host == "usage" { tab = .usage }
+                if model.signedIn { Task { await model.refresh() } }
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task { await reloadAuth() }
@@ -711,6 +743,14 @@ struct ContentView: View {
                             .background(palette.capsule, in: Circle())
                             .frame(width: 44, height: 44).contentShape(Rectangle()).padding(-4)
                     }.buttonStyle(.plain).accessibilityLabel("连接账号")
+                }
+                if tab == .usage {
+                    Button { connect = .tokensCI } label: {
+                        Image(systemName: "plus").font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.primary)
+                            .frame(width: 36, height: 36)
+                            .background(palette.capsule, in: Circle())
+                            .frame(width: 44, height: 44).contentShape(Rectangle()).padding(-4)
+                    }.buttonStyle(.plain).accessibilityLabel("连接 tokens.ci").accessibilityIdentifier("connectTokensCI")
                 }
                 if model.signedIn {
                 Button { Task { await model.refresh() } } label: {
@@ -834,6 +874,7 @@ struct ContentView: View {
                 }
             }
         }
+
         AppCard(title: "外观", caption: "App 与小组件共用同一主题", systemImage: "circle.lefthalf.filled", palette: palette) {
             VStack(alignment: .leading, spacing: 12) {
                 Picker("主题", selection: Binding(get: { theme }, set: { setTheme($0) })) {
