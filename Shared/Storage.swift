@@ -243,9 +243,18 @@ public enum SharedStorage {
     }
     static func identity(_ credentials: Credentials) -> String {
         // Subject distinguishes two users in the same workspace. Claims are routing
-        // hints only, not verified identity. No subject: keep separate rather than merge.
-        guard let subject = Credentials.claims(credentials.accessToken)?["sub"] as? String else { return UUID().uuidString }
-        return SHA256.hash(data: Data((subject + "|" + (credentials.accountID ?? "")).utf8)).map { String(format: "%02x", $0) }.joined()
+        // hints only, not verified identity.
+        func digest(_ value: String) -> String { SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined() }
+        if let subject = Credentials.claims(credentials.accessToken)?["sub"] as? String {
+            return digest(subject + "|" + (credentials.accountID ?? ""))
+        }
+        // No subject: must still be deterministic, or every re-login of the same account adds
+        // another Keychain entry. Workspace + email separates people; with neither, the token
+        // itself keeps distinct logins apart (never merged, never random).
+        if credentials.accountID != nil || credentials.email != nil {
+            return digest("nosub|" + (credentials.accountID ?? "") + "|" + (credentials.email?.lowercased() ?? ""))
+        }
+        return digest("token|" + credentials.accessToken)
     }
     static func widgetState() -> WidgetCacheState? {
         guard let url = try? container().appendingPathComponent("widget-state.json"), let data = try? Data(contentsOf: url) else { return nil }
@@ -356,6 +365,10 @@ public enum SharedStorage {
             let status = SecItemDelete(query(account: id) as CFDictionary)
             guard status == errSecSuccess || status == errSecItemNotFound else { throw ServiceError.storage("Keychain \(status)") }
             try clearSnapshot(account: id)
+            // The widget backoff belongs to the removed login; left behind it would mark a
+            // re-login as failed and throttle it for up to an hour.
+            let attempt = try WidgetRefreshAttempt.url(id)
+            if FileManager.default.fileExists(atPath: attempt.path) { try FileManager.default.removeItem(at: attempt) }
         }
         try publishWidgetSelection()
     }
@@ -619,6 +632,8 @@ public actor UsageService {
         let accountLease = try CredentialLease(account: id); defer { withExtendedLifetime(accountLease) {} }
         try SharedStorage.save(credentials, account: id)
         try SharedStorage.clearSnapshot(account: id)
+        // A fresh sign-in starts with a clean widget backoff, like the other providers.
+        try WidgetRefreshAttempt().save(id)
         try SharedStorage.publishWidgetSelection()
     }
     public func logout(account: String? = nil) throws {

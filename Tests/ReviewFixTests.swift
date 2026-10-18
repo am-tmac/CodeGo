@@ -497,6 +497,61 @@ final class ReviewFixTests: XCTestCase {
         XCTAssertNil(ClaudeOAuth.parsePastedCode("abc#mine", expectedState: ""), "no login in progress")
     }
 
+    // MARK: - 2026-10 bug report (H2 / M1 / M2)
+
+    private func jwt(_ payload: [String: Any]) throws -> String {
+        "header." + (try JSONSerialization.data(withJSONObject: payload)).base64EncodedString() + ".signature"
+    }
+
+    /// H2: a token without `sub` must not get a fresh random identity on every call; otherwise each
+    /// re-login of the same account adds another Keychain entry and the oldest (stale) one stays default.
+    func testIdentityWithoutSubjectIsDeterministic() throws {
+        let access = try jwt(["exp": 4_000_000_000, "email": "alex@example.com",
+                              "https://api.openai.com/auth": ["chatgpt_account_id": "acct-1"]])
+        let a = try Credentials(response: TokenResponse(accessToken: access, refreshToken: "r1", idToken: nil, expiresIn: nil))
+        XCTAssertEqual(SharedStorage.identity(a), SharedStorage.identity(a))
+        // A later login of the same account carries a new token but the same account + email.
+        let relogin = try jwt(["exp": 4_000_000_100, "email": "alex@example.com",
+                               "https://api.openai.com/auth": ["chatgpt_account_id": "acct-1"]])
+        let b = try Credentials(response: TokenResponse(accessToken: relogin, refreshToken: "r2", idToken: nil, expiresIn: nil))
+        XCTAssertEqual(SharedStorage.identity(a), SharedStorage.identity(b))
+        // Different people in the same workspace stay apart.
+        let other = try jwt(["email": "sam@example.com", "https://api.openai.com/auth": ["chatgpt_account_id": "acct-1"]])
+        let c = try Credentials(response: TokenResponse(accessToken: other, refreshToken: "r3", idToken: nil, expiresIn: nil))
+        XCTAssertNotEqual(SharedStorage.identity(a), SharedStorage.identity(c))
+        // No usable claim at all: still stable for the same stored credential, never a random UUID.
+        let bare = try Credentials(response: TokenResponse(accessToken: "unit-not-a-jwt", refreshToken: "r", idToken: nil, expiresIn: nil))
+        XCTAssertEqual(SharedStorage.identity(bare), SharedStorage.identity(bare))
+        XCTAssertNil(UUID(uuidString: SharedStorage.identity(bare)))
+        // A subject still wins and keeps the existing derivation (no re-keying of stored accounts).
+        let withSub = try Credentials(response: TokenResponse(accessToken: try jwt(["sub": "s", "email": "alex@example.com"]), refreshToken: "r", idToken: nil, expiresIn: nil))
+        XCTAssertNotEqual(SharedStorage.identity(withSub), SharedStorage.identity(a))
+    }
+
+    /// M1: tokens.ci install/remove must take the account lease like every other provider, so a
+    /// running refresh cannot be raced into a false 401 or a zombie snapshot.
+    func testTokensCIInstallAndRemoveRespectTheAccountLease() async throws {
+        let name = "unit-lease"
+        defer { try? TokensCIStore.remove(name) }
+        let held = try CredentialLease(account: "tokensci:" + name)
+        do { _ = try await TokensCIService().install(username: name, token: "tkr_fixture_only"); XCTFail("install must not bypass the lease") }
+        catch ServiceError.busy {} catch { XCTFail("Unexpected \(error)") }
+        do { try await TokensCIService().remove(name); XCTFail("remove must not bypass the lease") }
+        catch ServiceError.busy {} catch { XCTFail("Unexpected \(error)") }
+        withExtendedLifetime(held) {}
+    }
+
+    /// M2: a sign-in that returns no refresh token is a login problem, not "usage format changed".
+    func testClaudeSignInWithoutRefreshTokenHasItsOwnError() async throws {
+        let service = ClaudeService(api: ClaudeAPI(transport: ScriptedTransport([])),
+                                    store: ClaudeCredentialStore(load: { _ in throw ClaudeFailure.loginRequired }, save: { _, _ in XCTFail("nothing to save") }))
+        do { try await service.install(tokens: .init(accessToken: "a", refreshToken: nil)); XCTFail("must fail") }
+        catch let error as ClaudeFailure {
+            XCTAssertEqual(error, .noRefreshToken)
+            XCTAssertFalse(error.localizedDescription.contains("格式"))
+        }
+    }
+
     // MARK: - Corrupt saved card order must not crash launch
 
     func testDuplicateSavedOrderDoesNotTrap() {

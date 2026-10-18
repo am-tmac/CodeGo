@@ -405,6 +405,10 @@ actor TokensCIService {
 
     func install(username rawUsername: String, token: String, replacing: String? = nil) throws -> String {
         let username = try TokensCIAPI.normalizedUsername(rawUsername)
+        // Same per-account lease as refresh: a token swap must not race an in-flight request.
+        let lease = try CredentialLease(account: "tokensci:" + username); defer { withExtendedLifetime(lease) {} }
+        let replacedLease = try replacing.flatMap { $0 == username ? nil : try CredentialLease(account: "tokensci:" + $0) }
+        defer { withExtendedLifetime(replacedLease) {} }
         let existing = TokensCIStore.ids()
 
         if existing.contains(username), replacing == nil {
@@ -421,6 +425,8 @@ actor TokensCIService {
     }
 
     func remove(_ username: String) throws {
+        // Without the lease a running refresh could write its snapshot back after the delete.
+        let lease = try CredentialLease(account: "tokensci:" + username); defer { withExtendedLifetime(lease) {} }
         try TokensCIStore.remove(username)
         try DashboardStore.publish()
     }

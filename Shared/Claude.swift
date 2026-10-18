@@ -34,7 +34,7 @@ struct ClaudeSnapshot: Codable, Equatable {
 }
 
 enum ClaudeFailure: LocalizedError {
-    case loginRequired, unauthorized, forbidden, needsAppRefresh, busy, unavailable, network, malformed, storage, listenerBusy
+    case loginRequired, unauthorized, forbidden, needsAppRefresh, busy, unavailable, network, malformed, storage, listenerBusy, noRefreshToken
     var errorDescription: String? {
         switch self {
         case .loginRequired: return "尚未用 Claude 账号登录，请先在设置里登录"
@@ -46,6 +46,7 @@ enum ClaudeFailure: LocalizedError {
         case .network: return "Claude 网络连接失败；保留缓存"
         case .malformed: return "Claude 用量格式已变化；保留缓存，不推算额度"
         case .storage: return "Claude 本机钥匙串或共享缓存不可用，请检查签名与权限"
+        case .noRefreshToken: return "Claude 这次登录没有返回续期凭据，无法保持登录；请到 claude.ai 设置里撤销本 App 的旧授权后重新登录"
         case .listenerBusy: return "本机回调端口 54545 被占用，登录无法开始；请关闭占用它的 App 后重试，或改用授权码方式"
         }
     }
@@ -346,7 +347,7 @@ actor ClaudeService {
     /// App-only: store a completed sign-in — refresh token plus the access token and its expiry.
     func install(tokens: ClaudeAPI.Tokens) throws {
         guard !SharedStorage.isWidget else { throw ClaudeFailure.storage }
-        guard let refresh = tokens.refreshToken else { throw ClaudeFailure.malformed }
+        guard let refresh = tokens.refreshToken else { throw ClaudeFailure.noRefreshToken }
         let lease = try CredentialLease(account: ClaudeStore.id); defer { withExtendedLifetime(lease) {} }
         try ClaudeStore.saveCredential(Self.credential(refresh: try ClaudeAPI.validatedRefreshToken(refresh), tokens: tokens, now: Date()))
     }

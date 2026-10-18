@@ -858,6 +858,22 @@ final class StorageTests: XCTestCase {
         XCTAssertEqual(try SharedStorage.credentials(account: account)?.email, "stored@example.com")
         XCTAssertEqual((try XCTUnwrap(try storedRecord(account)))["email"] as? String, "stored@example.com")
     }
+    /// H1: logout must drop the widget backoff file, and a fresh Codex sign-in starts with a clean
+    /// attempt, so the widget neither shows "刷新失败" nor stays throttled for up to an hour.
+    func testLogoutAndReinstallResetWidgetBackoff() async throws {
+        guard try SharedStorage.accountIDs().isEmpty else { throw XCTSkip("Existing credentials") }
+        defer { try? SharedStorage.clear() }
+        let creds = try Credentials(response: TokenResponse(accessToken: "unit-h1", refreshToken: "unit-r", idToken: nil, expiresIn: 3600))
+        try await UsageService.shared.install(creds)
+        let id = try XCTUnwrap(SharedStorage.selectedAccount())
+        var failed = WidgetRefreshAttempt(); failed.fail(Date()); failed.fail(Date()); try failed.save(id)
+        try await UsageService.shared.install(creds)
+        XCTAssertFalse(WidgetRefreshAttempt.load(id).failed, "re-login keeps old backoff")
+        XCTAssertTrue(WidgetRefreshAttempt.load(id).allows(Date()))
+        try failed.save(id)
+        try await UsageService.shared.logout(account: id)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: try WidgetRefreshAttempt.url(id).path), "logout leaves attempt file")
+    }
     func testUnauthorizedRightAfterRotationDoesNotRotateAgain() async throws {
         guard try SharedStorage.accountIDs().isEmpty else { throw XCTSkip("Existing credentials") }
         defer { try? SharedStorage.clear() }
