@@ -90,7 +90,7 @@ struct TokensCIConnectSheet: View {
                             do {
                                 let name = try await TokensCIService.shared.install(username: enteredName, token: enteredToken)
                                 model.reloadAccounts()
-                                if !(await model.refresh(target: .tokensCI(name))) { message = "账号已保存，正在刷新其他账号；请稍后点此账号的刷新。" }
+                                if !(await model.refresh(target: .tokensCI(name))) { model.message = "账号已保存，正在刷新其他账号；请稍后点此账号的刷新。" }
                                 username = ""; consent = false
                                 dismiss()
                             } catch { message = (error as? TokensCIError)?.localizedDescription ?? "保存失败，请解锁后重试" }

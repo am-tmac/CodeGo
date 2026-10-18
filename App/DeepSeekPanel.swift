@@ -18,6 +18,10 @@ struct DeepSeekPanel: View {
     @State private var busy = false
     @State private var consent = false
     @State private var message: String?
+    init(model: UsageModel, replacing: String? = nil) {
+        self.model = model
+        _replacing = State(initialValue: replacing)
+    }
     var palette: AppPalette { .resolve(scheme) }
     /// Keychain or snapshot changed: republish through the model (it also rebuilds the widget
     /// dashboard) and ask WidgetKit to redraw.

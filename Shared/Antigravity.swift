@@ -194,14 +194,15 @@ struct AntigravityAPI {
     }
 
     /// Tolerant reader for `models` (object keyed by id, or an array): only rows with a
-    /// `quotaInfo.remainingFraction` become meters, and internal/feature-only models are skipped
+    /// `quotaInfo` become meters (an omitted fraction means zero), and internal/feature-only models are skipped
     /// the same way the community tools skip them.
     static func parseModels(_ data: Data) -> [AntigravityQuota] {
         let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         var rows: [AntigravityQuota] = []
         func add(id: String, model: [String: Any]) {
             guard !Self.isInternalModel(id, model) else { return }
-            guard let quota = model["quotaInfo"] as? [String: Any], let fraction = number(quota["remainingFraction"]) else { return }
+            guard let quota = model["quotaInfo"] as? [String: Any] else { return }
+            guard let fraction = quota["remainingFraction"] == nil ? 0 : number(quota["remainingFraction"]) else { return }
             let label = (model["displayName"] as? String) ?? (model["label"] as? String) ?? id
             rows.append(AntigravityQuota(label: label, remaining: min(max(fraction, 0), 1) * 100,
                                          reset: (quota["resetTime"] as? String).flatMap(date)))

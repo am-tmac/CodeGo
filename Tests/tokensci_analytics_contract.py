@@ -22,7 +22,8 @@ class AnalyticsContracts(unittest.TestCase):
   self.assertIn('guard !SharedStorage.isWidget',s)
   shared=(R/'Shared/TokensCI.swift').read_text()
   self.assertIn('minimal.history = nil',shared)
-  baseline=json.loads((R/'Logs/build37-widget-baseline.json').read_text())
+  # 2026-10-18: approved progress-reload and Antigravity pairing fixes; keep bytes pinned.
+  baseline=json.loads((R/'Tests/Fixtures/widget-bugfix-baseline.json').read_text())
   for name,digest in baseline.items():self.assertEqual(hashlib.sha256((R/name).read_bytes()).hexdigest(),digest,name)
  def test_production_no_preview(self):
   for d in ['App','Shared','Widget']:

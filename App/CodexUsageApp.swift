@@ -29,7 +29,9 @@ enum AppRefreshError {
                 case .http: return "Codex 服务暂不可用，保留缓存"
                 }
             }
-            return "Codex 网络连接失败，保留缓存"
+            if error is DecodingError { return "Codex 用量格式异常，保留缓存" }
+            if error is URLError { return "Codex 网络连接失败，保留缓存" }
+            return "Codex 刷新失败，保留缓存"
         case .deepSeek: return (error as? DeepSeekError)?.localizedDescription ?? "DeepSeek 刷新失败，保留缓存"
         case .antigravity: return (error as? AntigravityError)?.localizedDescription ?? "Antigravity 刷新失败，保留缓存"
         case .claude: return (error as? ClaudeFailure)?.localizedDescription ?? "Claude 刷新失败，保留缓存"
@@ -596,7 +598,7 @@ struct ContentView: View {
             cards.append((cardKey("deepseek", id), AnyView(DeepSeekAccountCard(snapshot: model.balances[id],
                                 expanded: expandedBinding("deepseek:" + id), palette: palette,
                                 onRefresh: { Task { _ = await model.refreshDeepSeek(id) } },
-                                onUpdateKey: { connect = .service(.deepseek) },
+                                onUpdateKey: { connect = .deepSeekReplacement(id) },
                                 onRemove: { Task { await model.removeDeepSeek(id) } },
                                 busy: model.busy, refreshError: model.refreshErrors[.deepSeek(id)],
                                 accountContext: "DeepSeek · 账号 \((model.deepSeekIDs.firstIndex(of: id) ?? 0) + 1)"))))
@@ -676,6 +678,14 @@ struct ContentView: View {
             model.reloadAccounts()
             await reloadAuth()
             if model.signedIn { await model.autoRefresh() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .claudeSignedIn)) { _ in
+            model.reloadAccounts()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .antigravitySignedIn)) { _ in
+            model.reloadAccounts()
+            WidgetCenter.shared.reloadAllTimelines()
         }
         .onOpenURL { url in
             if url.scheme == "codexusage" {

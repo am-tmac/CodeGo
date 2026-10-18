@@ -619,7 +619,7 @@ public actor UsageService {
     public static let shared = UsageService()
     private let api: AuthAPI
     init(api: AuthAPI = AuthAPI()) { self.api = api }
-    public func install(_ credentials: Credentials) throws {
+    public func install(_ credentials: Credentials) async throws {
         try Task.checkCancellation()
         let lease = try CredentialLease(); defer { withExtendedLifetime(lease) {} }
         let identity = SharedStorage.identity(credentials)
@@ -629,7 +629,20 @@ public actor UsageService {
             guard let old = try SharedStorage.credentials(account: existing) else { return false }
             return SharedStorage.identity(old) == identity
         } ?? (ids.isEmpty ? "phone-owned" : identity)
-        let accountLease = try CredentialLease(account: id); defer { withExtendedLifetime(accountLease) {} }
+        // A completed device-code exchange cannot be repeated: give an in-flight refresh
+        // a bounded window to release its lease before saving the new login.
+        let accountLease: CredentialLease
+        var retries = 0
+        while true {
+            try Task.checkCancellation()
+            do { accountLease = try CredentialLease(account: id); break }
+            catch ServiceError.busy where retries < 30 {
+                retries += 1
+                try await Task.sleep(nanoseconds: 100_000_000)
+            }
+        }
+        defer { withExtendedLifetime(accountLease) {} }
+        try Task.checkCancellation()
         try SharedStorage.save(credentials, account: id)
         try SharedStorage.clearSnapshot(account: id)
         // A fresh sign-in starts with a clean widget backoff, like the other providers.
@@ -647,7 +660,7 @@ public actor UsageService {
         })
     }
     // Injectable permission seam exercises revoke/cancellation without phone secrets.
-    func refresh(account: String?, widget: Bool, permission: () -> Bool) async throws -> UsageSnapshot {
+    func refresh(account: String?, widget: Bool, notifyProgress: Bool = false, permission: () -> Bool) async throws -> UsageSnapshot {
         func checkPermission() throws {
             try Task.checkCancellation()
             if widget && !permission() { throw ServiceError.storage("仅缓存 · 打开 App 刷新") }
@@ -671,7 +684,7 @@ public actor UsageService {
             attempt.begin(Date()); try attempt.save(id)
             // Persisted progress is served by the provider without a second request.
             #if os(iOS)
-            WidgetCenter.shared.reloadTimelines(ofKind: "CodexUsageWidget")
+            if notifyProgress { WidgetCenter.shared.reloadTimelines(ofKind: "CodexUsageWidget") }
             #endif
         }
         do {
@@ -702,10 +715,10 @@ public actor UsageService {
             let result = UsageSnapshot(usage: usage, updatedAt: Date(),
                                        accountLabel: SharedStorage.snapshotLabel(email: credentials.displayIdentity, plan: usage.planType))
             try SharedStorage.save(result, account: id)
-            if widget { attempt.succeed(Date()); try attempt.save(id) }
+            attempt.succeed(Date()); try attempt.save(id)
             return result
         } catch {
-            if widget { attempt.fail(Date()); try? attempt.save(id) }
+            attempt.fail(Date()); try? attempt.save(id)
             throw error // Provider/intent retain the last successful cache.
         }
     }

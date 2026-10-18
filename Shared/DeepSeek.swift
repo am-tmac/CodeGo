@@ -26,7 +26,7 @@ struct DeepSeekBalance: Codable, Equatable {
             total = try amount(.total)
             granted = c.contains(.granted) ? try amount(.granted) : nil
             toppedUp = c.contains(.toppedUp) ? try amount(.toppedUp) : nil
-            guard ["USD", "CNY"].contains(currency) else { throw DeepSeekError.malformed }
+            guard !currency.isEmpty else { throw DeepSeekError.malformed }
         }
         func encode(to encoder: Encoder) throws {
             var c = encoder.container(keyedBy: CodingKeys.self)

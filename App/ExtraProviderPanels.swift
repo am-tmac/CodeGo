@@ -21,8 +21,8 @@ struct AntigravityPanel: View {
                         Button("立即刷新用量") { Task { await model.refresh() } }.disabled(model.busy)
                         Button("移除刷新令牌", role: .destructive) {
                             Task {
-                                do { try await AntigravityService.shared.remove(); model.reloadAccounts(); message = "已移除 Antigravity 令牌" }
-                                catch { message = error.localizedDescription }
+                                await model.removeAntigravity()
+                                message = model.antigravityInstalled ? model.message : "已移除 Antigravity 令牌"
                             }
                         }
                     }.font(.footnote)

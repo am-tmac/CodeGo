@@ -52,6 +52,62 @@ final class StorageTests: XCTestCase {
         try FileManager.default.removeItem(at: isolatedContainer)
     }
 
+    func testFix01AppRefreshPersistsSuccessAndFailure() async throws {
+        let id = "unit-fix01"
+        defer { try? SharedStorage.clear(account: id) }
+        try SharedStorage.save(Credentials(response: TokenResponse(accessToken: "unit-only", refreshToken: "unit-r", idToken: nil, expiresIn: 3600)), account: id)
+        var attempt = WidgetRefreshAttempt(); attempt.fail(Date()); try attempt.save(id)
+        let service = UsageService(api: AuthAPI(transport: ScriptedTransport([(#"{"rate_limit":null}"#, 200), ("{}", 500)])))
+        _ = try await service.refresh(account: id, widget: false, permission: { true })
+        XCTAssertFalse(WidgetRefreshAttempt.load(id).failed)
+        XCTAssertNotNil(WidgetRefreshAttempt.load(id).completedAt)
+        let cache = try Data(contentsOf: SharedStorage.snapshotURL(id))
+        try WidgetRefreshAttempt().save(id)
+        do { _ = try await service.refresh(account: id, widget: false, permission: { true }); XCTFail("must fail") } catch {}
+        XCTAssertTrue(WidgetRefreshAttempt.load(id).failed)
+        XCTAssertEqual(try Data(contentsOf: SharedStorage.snapshotURL(id)), cache)
+    }
+
+    func testFix06CodexErrorsAreClassified() {
+        XCTAssertEqual(AppRefreshError.text(DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "fixture")), for: .codex("unit")), "Codex 用量格式异常，保留缓存")
+        XCTAssertEqual(AppRefreshError.text(URLError(.notConnectedToInternet), for: .codex("unit")), "Codex 网络连接失败，保留缓存")
+        XCTAssertEqual(AppRefreshError.text(NSError(domain: "fixture", code: 1), for: .codex("unit")), "Codex 刷新失败，保留缓存")
+    }
+
+    func testFix11InstallWaitsForAccountLease() async throws {
+        guard try SharedStorage.accountIDs().isEmpty else { throw XCTSkip("Existing credentials") }
+        defer { try? SharedStorage.clear() }
+        let credentials = try Credentials(response: TokenResponse(accessToken: "unit-fix11", refreshToken: "unit-r", idToken: nil, expiresIn: 3600))
+        let holder = Task {
+            let held = try CredentialLease(account: "phone-owned")
+            try await Task.sleep(nanoseconds: 400_000_000)
+            withExtendedLifetime(held) {}
+        }
+        try await Task.sleep(nanoseconds: 100_000_000)
+        do { try await UsageService.shared.install(credentials) }
+        catch { XCTFail("completed login must wait for refresh: \(error)") }
+        try await holder.value
+        XCTAssertEqual(try SharedStorage.credentials()?.refreshToken, "unit-r")
+    }
+
+    func testFix11InstallLeaseWaitIsBoundedAndCancellable() async throws {
+        guard try SharedStorage.accountIDs().isEmpty else { throw XCTSkip("Existing credentials") }
+        let credentials = try Credentials(response: TokenResponse(accessToken: "unit-fix11", refreshToken: "unit-r", idToken: nil, expiresIn: 3600))
+        let held = try CredentialLease(account: "phone-owned")
+        defer { withExtendedLifetime(held) {} }
+        let start = Date()
+        do { try await UsageService.shared.install(credentials); XCTFail("must time out") }
+        catch ServiceError.busy {} catch { XCTFail("Unexpected \(error)") }
+        XCTAssertGreaterThanOrEqual(Date().timeIntervalSince(start), 2.8)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 5)
+        let task = Task { try await UsageService.shared.install(credentials) }
+        try await Task.sleep(nanoseconds: 150_000_000)
+        task.cancel()
+        do { try await task.value; XCTFail("must cancel") }
+        catch is CancellationError {} catch { XCTFail("Unexpected \(error)") }
+        XCTAssertNil(try SharedStorage.credentials())
+    }
+
     @MainActor func testTokensCIRefreshIsTargetedKeepsCacheAndAttributesFailures() async throws {
         let data = Data(#"{"user":{"username":"fixture"},"stats":{"totalTokens":100,"totalCost":1},"clients":[],"contributions":[]}"#.utf8)
         let value = try await TokensCIAPI(transport: ScriptedTransport([(String(decoding: data, as: UTF8.self), 200)])).profile(username: "fixture", token: "tkr_fixture_only")

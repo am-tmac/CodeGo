@@ -20,6 +20,86 @@ final class ReviewFixTests: XCTestCase {
         if let isolatedContainer { try FileManager.default.removeItem(at: isolatedContainer) }
     }
 
+    // MARK: - 2026-10-18 regression coverage
+
+    private func reviewSource(_ path: String) throws -> String {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        return try String(contentsOf: root.appendingPathComponent(path))
+    }
+
+    func testFix02OnlyIntentRequestsProgressReload() throws {
+        let storage = try reviewSource("Shared/Storage.swift")
+        let views = try reviewSource("Shared/UsageViews.swift")
+        let widget = try reviewSource("Widget/CodexUsageWidget.swift")
+        XCTAssertTrue(storage.contains("if notifyProgress { WidgetCenter.shared.reloadTimelines"))
+        XCTAssertTrue(views.contains("WidgetRefresh.one(id: id, provider: provider, notifyProgress: true)"))
+        XCTAssertTrue(views.contains("provider: String, notifyProgress: Bool = false"))
+        XCTAssertTrue(views.contains("widget: true, notifyProgress: notifyProgress, permission:"))
+        XCTAssertTrue(widget.contains("WidgetRefresh.one(id: id, provider: provider)"))
+    }
+
+    func testFix03ExhaustedModelsKeepZeroAndReset() throws {
+        let data = Data(#"{"models":{"exhausted":{"displayName":"Exhausted","quotaInfo":{"resetTime":"2026-10-19T00:00:00Z"}},"absent":{"displayName":"Absent"},"invalid":{"displayName":"Invalid","quotaInfo":{"remainingFraction":"bad"}}}}"#.utf8)
+        let rows = AntigravityAPI.parseModels(data)
+        XCTAssertEqual(rows.count, 1)
+        let row = try XCTUnwrap(rows.first)
+        XCTAssertEqual(row.label, "Exhausted")
+        XCTAssertEqual(row.remaining, 0)
+        XCTAssertEqual(row.reset, ISO8601DateFormatter().date(from: "2026-10-19T00:00:00Z"))
+    }
+
+    func testFix04WidgetTotalPairsRemainingAndReset() throws {
+        let views = try reviewSource("Shared/UsageViews.swift")
+        let body = try XCTUnwrap(views.components(separatedBy: "struct AntigravityWidgetView").last)
+        XCTAssertTrue(body.contains("QuotaSummary.tightest"))
+        XCTAssertTrue(body.contains("total?.remaining"))
+        XCTAssertTrue(body.contains("total?.reset"))
+        XCTAssertFalse(body.contains(#"compactMap(\.reset).min()"#))
+    }
+
+    func testFix05UnknownCurrencyIsAcceptedButEmptyIsRejected() throws {
+        let data = Data(#"{"is_available":true,"balance_infos":[{"currency":"EUR","total_balance":"12.34"}]}"#.utf8)
+        let balance = try JSONDecoder().decode(DeepSeekBalance.self, from: data)
+        XCTAssertEqual(balance.balanceInfos.first?.currency, "EUR")
+        XCTAssertEqual(balance.balanceInfos.first?.total, Decimal(string: "12.34"))
+        XCTAssertThrowsError(try JSONDecoder().decode(DeepSeekBalance.self, from: Data(String(decoding: data, as: UTF8.self).replacingOccurrences(of: "EUR", with: "").utf8)))
+    }
+
+    func testFix07UpdateKeyCarriesAccountIntoPanelState() throws {
+        let app = try reviewSource("App/CodexUsageApp.swift")
+        let routes = try reviewSource("App/ConnectViews.swift")
+        let panel = try reviewSource("App/DeepSeekPanel.swift")
+        XCTAssertTrue(app.contains("onUpdateKey: { connect = .deepSeekReplacement(id) }"))
+        XCTAssertTrue(routes.contains("case deepSeekReplacement(String)"))
+        XCTAssertTrue(routes.contains("replacing: entry.replacing"))
+        XCTAssertTrue(routes.contains("DeepSeekPanel(model: model, replacing: replacing)"))
+        XCTAssertTrue(panel.contains("_replacing = State(initialValue: replacing)"))
+    }
+
+    func testFix08PanelRemovalUsesModelPublication() throws {
+        let panel = try reviewSource("App/ExtraProviderPanels.swift")
+        XCTAssertTrue(panel.contains("await model.removeAntigravity()"))
+        XCTAssertFalse(panel.contains("AntigravityService.shared.remove()"))
+        XCTAssertTrue(panel.contains("已移除 Antigravity 令牌"))
+    }
+
+    func testFix09RootObservesCompletedSignIns() throws {
+        let app = try reviewSource("App/CodexUsageApp.swift")
+        for name in ["claudeSignedIn", "antigravitySignedIn"] {
+            let marker = ".onReceive(NotificationCenter.default.publisher(for: ." + name + "))"
+            XCTAssertTrue(app.contains(marker))
+            if let body = app.components(separatedBy: marker).dropFirst().first?.components(separatedBy: "}").first {
+                XCTAssertTrue(body.contains("model.reloadAccounts()"))
+                XCTAssertTrue(body.contains("WidgetCenter.shared.reloadAllTimelines()"))
+            }
+        }
+    }
+
+    func testFix10SavedAccountMessageSurvivesDismissal() throws {
+        let panel = try reviewSource("App/TokensCIPanel.swift")
+        XCTAssertTrue(panel.contains(#"model.message = "账号已保存"#))
+    }
+
     // MARK: - build 30: legacy cleanup must not erase the current OAuth state
 
     func testBuild30LegacyCleanupDoesNotDeleteOAuthCacheOrBackoff() throws {

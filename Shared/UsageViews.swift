@@ -54,7 +54,7 @@ struct RefreshDashboardIntent: AppIntent {
         await withTaskGroup(of: Void.self) { group in
             for id in targets {
                 let provider = accounts.first(where: { $0.id == id })?.provider ?? "codex"
-                group.addTask { _ = try? await WidgetRefresh.one(id: id, provider: provider) }
+                group.addTask { _ = try? await WidgetRefresh.one(id: id, provider: provider, notifyProgress: true) }
             }
         }
         try Task.checkCancellation()
@@ -65,13 +65,13 @@ struct RefreshDashboardIntent: AppIntent {
 /// One slot's refresh, the same for the timeline and the button. The last good cache and the
 /// persisted failure flag survive any error.
 enum WidgetRefresh {
-    static func one(id: String, provider: String) async throws {
+    static func one(id: String, provider: String, notifyProgress: Bool = false) async throws {
         switch provider {
         case "deepseek": _ = try await DeepSeekService.shared.refresh(id: id)
         case "claude": _ = try await ClaudeService.shared.refresh()
         case "antigravity": _ = try await AntigravityService.shared.refresh()
         case "tokensci": return // Cache-only: opening 用量 refreshes through the App model.
-        default: _ = try await UsageService.shared.refresh(account: id, widget: true, permission: { DashboardStore.canRefresh(id, provider: "codex") })
+        default: _ = try await UsageService.shared.refresh(account: id, widget: true, notifyProgress: notifyProgress, permission: { DashboardStore.canRefresh(id, provider: "codex") })
         }
     }
 }
@@ -497,8 +497,9 @@ struct AntigravityWidgetView: View {
     var palette: ThemePalette = .dark
     var display: UsageDisplay = .remaining
     /// 用户要求：组件里的 Antigravity 也只显示总用量，不列池、不列模型。
-    private var total: Double? { snapshot?.usage.tightestRemaining }
-    private var totalReset: Date? { (snapshot?.usage.pools ?? []).compactMap(\.reset).min() }
+    private var total: QuotaSummary.Window? {
+        QuotaSummary.tightest((snapshot?.usage.quotas ?? []).map { .init(label: "模型额度", remaining: $0.remaining, reset: $0.reset) })
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 5) {
@@ -510,11 +511,11 @@ struct AntigravityWidgetView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("总用量").font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.primary).lineLimit(1).minimumScaleFactor(0.7)
                     Spacer(minLength: 2)
-                    Text(display.text(total))
+                    Text(display.text(total?.remaining))
                         .font(.system(size: 14, weight: .bold)).monospacedDigit().foregroundStyle(palette.primary)
                 }
-                QuotaBar(remaining: total, tint: .antigravity, display: display, palette: palette)
-                Label(ResetTimestamp.text(totalReset), systemImage: "clock")
+                QuotaBar(remaining: total?.remaining, tint: .antigravity, display: display, palette: palette)
+                Label(ResetTimestamp.text(total?.reset), systemImage: "clock")
                     .font(.system(size: 9)).monospacedDigit().foregroundStyle(palette.secondary)
             }
             Spacer(minLength: 0)

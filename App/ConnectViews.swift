@@ -154,11 +154,17 @@ enum ConnectEntry: Identifiable, Hashable {
     case picker
     case tokensCI
     case service(ServiceBrand)
+    case deepSeekReplacement(String)
+    var replacing: String? {
+        if case .deepSeekReplacement(let id) = self { return id }
+        return nil
+    }
     var id: String {
         switch self {
         case .picker: return "picker"
         case .tokensCI: return "tokensCI"
         case .service(let brand): return brand.rawValue
+        case .deepSeekReplacement(let id): return "deepseek:" + id
         }
     }
 }
@@ -173,9 +179,13 @@ struct ConnectSheet: View {
     var body: some View {
         NavigationStack(path: $path) {
             picker
-                .navigationDestination(for: ServiceBrand.self) { brand in ConnectServicePage(model: model, brand: brand) }
+                .navigationDestination(for: ServiceBrand.self) { brand in ConnectServicePage(model: model, brand: brand, replacing: entry.replacing) }
         }
-        .onAppear { if case .service(let brand) = entry, path.isEmpty { path = [brand] } }
+        .onAppear {
+            guard path.isEmpty else { return }
+            if case .service(let brand) = entry { path = [brand] }
+            if case .deepSeekReplacement = entry { path = [.deepseek] }
+        }
     }
     func connectedCount(_ brand: ServiceBrand) -> Int {
         switch brand {
@@ -244,6 +254,7 @@ private struct ConnectedLabelStyle: LabelStyle {
 struct ConnectServicePage: View {
     @ObservedObject var model: UsageModel
     let brand: ServiceBrand
+    var replacing: String? = nil
     @Environment(\.colorScheme) private var scheme
     var palette: AppPalette { .resolve(scheme) }
     var body: some View {
@@ -262,7 +273,7 @@ struct ConnectServicePage: View {
                 switch brand {
                 case .codex: CodexConnectPanel(model: model, palette: palette)
                 case .claude: ClaudePanel(model: model, palette: palette)
-                case .deepseek: DeepSeekPanel(model: model)
+                case .deepseek: DeepSeekPanel(model: model, replacing: replacing)
                 case .antigravity: AntigravityPanel(model: model, palette: palette)
                 }
                 if let message = model.message {

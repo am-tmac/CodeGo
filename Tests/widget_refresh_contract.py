@@ -113,7 +113,7 @@ class WidgetRefreshContract(unittest.TestCase):
         connect = (ROOT / 'App/ConnectViews.swift').read_text()
         status = app.split('var statusSections: some View {', 1)[1].split('@ViewBuilder var settingsSections', 1)[0]
         settings = app.split('@ViewBuilder var settingsSections', 1)[1]
-        for panel in ['ClaudePanel(model: model, palette: palette)', 'DeepSeekPanel(model: model)',
+        for panel in ['ClaudePanel(model: model, palette: palette)', 'DeepSeekPanel(model: model, replacing: replacing)',
                       'AntigravityPanel(model: model, palette: palette)', 'CodexConnectPanel(model: model, palette: palette)']:
             self.assertIn(panel, connect)
             self.assertNotIn(panel, status)
