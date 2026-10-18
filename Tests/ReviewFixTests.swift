@@ -632,6 +632,20 @@ final class ReviewFixTests: XCTestCase {
         }
     }
 
+    /// M5: Antigravity must pin the widget Keychain query to the permitted group and publish a
+    /// probed credential group, like DeepSeek/Claude; an unverified group misreports "请重登".
+    func testAntigravityWidgetKeychainIsPinnedAndProbed() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let store = try String(contentsOf: root.appendingPathComponent("Shared/Antigravity.swift"))
+        let query = try XCTUnwrap(store.components(separatedBy: "static func query()").dropFirst().first)
+            .components(separatedBy: "static func saveToken")[0]
+        XCTAssertTrue(query.contains("if SharedStorage.isWidget, let group = SharedStorage.permittedGroup { q[kSecAttrAccessGroup as String] = group }"))
+        XCTAssertTrue(store.contains("static func credentialGroup() -> String?"))
+        let dashboard = try String(contentsOf: root.appendingPathComponent("Shared/DashboardStore.swift"))
+        XCTAssertTrue(dashboard.contains("credentialGroup: AntigravityStore.credentialGroup()"))
+        XCTAssertFalse(dashboard.contains("provider: \"antigravity\", ordinal: 1,\n                                         credentialGroup: SharedStorage.permittedGroup"))
+    }
+
     // MARK: - Corrupt saved card order must not crash launch
 
     func testDuplicateSavedOrderDoesNotTrap() {

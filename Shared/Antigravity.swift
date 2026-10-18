@@ -332,7 +332,21 @@ enum AntigravityStore {
     static let service = "CodexUsage.Antigravity.refresh-token.v1"
     static let account = "antigravity"
     static func query() -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
+        var q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
+        // Same as DeepSeek/Claude: the extension reads only from the probed shared group.
+        if SharedStorage.isWidget, let group = SharedStorage.permittedGroup { q[kSecAttrAccessGroup as String] = group }
+        return q
+    }
+    /// The group the stored token actually lives in, published only when it is the permitted
+    /// shared group; otherwise the widget stays cache-only instead of failing as "请重登".
+    static func credentialGroup() -> String? {
+        guard let group = SharedStorage.permittedGroup else { return nil }
+        var q = query(); q[kSecReturnAttributes as String] = true; q[kSecMatchLimit as String] = kSecMatchLimitAll
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &result) == errSecSuccess,
+              let rows = result as? [[String: Any]], rows.count == 1,
+              rows[0][kSecAttrAccessGroup as String] as? String == group else { return nil }
+        return group
     }
     static func saveToken(_ token: String) throws {
         guard !SharedStorage.isWidget else { throw AntigravityError.storage }

@@ -41,7 +41,7 @@ enum DashboardStore {
         // group is the group the token was written under.
         if AntigravityStore.installed() {
             rows.append(DashboardAccount(id: AntigravityStore.account, provider: "antigravity", ordinal: 1,
-                                         credentialGroup: SharedStorage.permittedGroup))
+                                         credentialGroup: AntigravityStore.credentialGroup()))
         }
         if ClaudeStore.installed() {
             rows.append(DashboardAccount(id: ClaudeStore.id, provider: "claude", ordinal: 1,
