@@ -45,9 +45,6 @@ struct TokensCISnapshot: Codable, Equatable {
     var periodNote: String {
         "按设备日历日 \(selectedDay ?? "未验证")（\(selectedTimeZone ?? "旧缓存")）匹配上报日期；电脑分桶时区须一致。旧版或异区整日桶无法精确换算，不按首条消息拆分。"
     }
-
-    /// Sparse uploads do not define a reliable daily run rate.
-    var monthlyEstimate: Double? { nil }
 }
 
 struct TokensCIClient: Codable, Equatable, Identifiable {

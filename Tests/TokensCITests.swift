@@ -71,7 +71,6 @@ final class TokensCITests: XCTestCase {
         XCTAssertEqual(value.clients.first?.tokens ?? 0, 1061210925, accuracy: 1)
         XCTAssertEqual(value.clients.reduce(0) { $0 + $1.tokens }, value.todayTokens, accuracy: 1)
         XCTAssertEqual(value.clients.reduce(0) { $0 + $1.cost }, value.todayCost, accuracy: 0.001)
-        XCTAssertNil(value.monthlyEstimate, "Sparse history must not be extrapolated as a monthly bill")
         XCTAssertEqual(value.dataUpdatedAt.timeIntervalSince1970, 1791052276.246, accuracy: 0.001)
     }
     func testMissingTodayNeverUsesLatestReportedDay() async throws {

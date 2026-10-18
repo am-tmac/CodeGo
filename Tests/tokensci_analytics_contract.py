@@ -22,9 +22,15 @@ class AnalyticsContracts(unittest.TestCase):
   self.assertIn('guard !SharedStorage.isWidget',s)
   shared=(R/'Shared/TokensCI.swift').read_text()
   self.assertIn('minimal.history = nil',shared)
-  # 2026-10-18: approved progress-reload and Antigravity pairing fixes; keep bytes pinned.
+  # 2026-10-18: approved progress-reload, Antigravity pairing and 月预估 removal; keep bytes pinned.
   baseline=json.loads((R/'Tests/Fixtures/widget-bugfix-baseline.json').read_text())
   for name,digest in baseline.items():self.assertEqual(hashlib.sha256((R/name).read_bytes()).hexdigest(),digest,name)
+ def test_no_monthly_estimate(self):
+  # 2026-10-18: user removed 月预估 from the App and the widget entirely.
+  for d in ['App','Shared','Widget']:
+   for p in (R/d).glob('*.swift'):
+    t=p.read_text()
+    for bad in ['预估','monthlyEstimate','不外推']:self.assertNotIn(bad,t,str(p))
  def test_production_no_preview(self):
   for d in ['App','Shared','Widget']:
    for p in (R/d).glob('*.swift'):

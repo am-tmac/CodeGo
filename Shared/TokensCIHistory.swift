@@ -171,7 +171,6 @@ struct TokensCIAnalytics {
     let composition: TokensCIComposition?
     let weekdays: [Double]
     let peakDay: TokensCIDay?
-    var monthlyEstimate: Double? { nil }
     var cacheReadRatio: Double? { guard let c = composition, c.total > 0, c.values.count == 5 else { return nil }; return c.values[2] / c.total }
 }
 

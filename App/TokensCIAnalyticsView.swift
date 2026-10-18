@@ -183,10 +183,9 @@ struct TokensCIAnalyticsView: View {
         return VStack(spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 tile("连续活跃", "\(a.streak) 天", "截至最近上报日\n一年内最长 \(a.longestStreak) 天", .orange)
-                tile("月度预估", "—", "不外推 · \(range)天已报 " + money(a.cost), .purple)
+                tile("每个活跃日", a.activeDays > 0 ? money(a.cost / Double(a.activeDays)) : "—", (a.activeDays > 0 ? tokens(a.tokens / Double(a.activeDays)) : "—") + " Token\n\(range) 天中有 \(a.activeDays) 个活跃上报日", .blue)
             }
             HStack(alignment: .top, spacing: 12) {
-                tile("每个活跃日", a.activeDays > 0 ? money(a.cost / Double(a.activeDays)) : "—", (a.activeDays > 0 ? tokens(a.tokens / Double(a.activeDays)) : "—") + " Token\n\(range) 天中有 \(a.activeDays) 个活跃上报日", .blue)
                 tile("缓存读取占比", a.cacheReadRatio.map(pct) ?? "—", "每 1M Token " + (a.tokens > 0 ? money(a.cost / a.tokens * 1_000_000) : "—") + "\n最近 \(range) 天 · 非请求命中率", .cyan)
             }
         }
@@ -228,7 +227,7 @@ struct TokensCIAnalyticsView: View {
             }
             card {
                 Text("统计口径").font(.subheadline.bold())
-                Text("\(range) 天窗口：\(analytics.start) — \(end)，锚定最近上报日，不冒充今天。只比较已上报记录；缺报并不代表没有使用，月度预估不线性外推。").font(.caption).foregroundStyle(muted)
+                Text("\(range) 天窗口：\(analytics.start) — \(end)，锚定最近上报日，不冒充今天。只比较已上报记录；缺报并不代表没有使用。").font(.caption).foregroundStyle(muted)
             }
         }
     }

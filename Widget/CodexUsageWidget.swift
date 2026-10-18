@@ -308,7 +308,6 @@ struct TokensCIWidgetView: View {
                 Spacer(minLength: 0)
                 Text("累计 " + TokensCIFormat.compact(value.totalTokens) + " · 缓存 " + TokensCIFormat.percent(value.cacheHitRate))
                     .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.7)
-                Text("月预估 — · 不外推").font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1)
             }
             .padding(8)
             .background(palette.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))

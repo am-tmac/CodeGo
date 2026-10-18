@@ -19,7 +19,6 @@ final class TokensCIAnalyticsTests: XCTestCase {
         XCTAssertEqual(a.activeDays, 3)
         XCTAssertEqual(a.streak, 1)
         XCTAssertEqual(a.longestStreak, 2)
-        XCTAssertNil(a.monthlyEstimate)
         XCTAssertNil(history.day("2024-03-02")?.messages)
         XCTAssertNil(history.analytics(ending: "2024-03-03", days: 4).cacheReadRatio)
     }
