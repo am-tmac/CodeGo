@@ -12,7 +12,7 @@
 ## 4.0 / build 37：完整 tokens.ci 用量分析（历史）
 
 - 已实现账号身份、累计与时段总量、可选日期热图、同日客户端、四项分析、原生 Charts 日堆叠 Token/费用切换、7/30/90 天、Provider/模型展开、Token 组成及一年星期习惯/峰值日。
-- 真实 `contributions` 计算；最近上报日明确标注，不冒充今日。月度预估不可用，消息口径冲突显示 —，缓存读取占比不是请求命中率。
+- 真实 `contributions` 计算；最近上报日明确标注，不冒充今日。消息口径冲突显示 —，缓存读取占比不是请求命中率。
 - 历史保存在 App 私有 Application Support，共享快照不含历史；旧缓存缺少历史时提示刷新。小组件源文件与 build36 字节相同，Charts 仅链接主 App。
 - 构建：`python3 Scripts/build37_release.py` → `python3 Scripts/package_widget_build37.py`。实测与边界见 `VERIFICATION-build37.md`；未提交/推送。
 
