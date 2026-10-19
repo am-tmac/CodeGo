@@ -602,7 +602,8 @@ struct WidgetRefreshAttempt: Codable {
         return value
     }
     func save(_ account: String) throws {
-        try JSONEncoder().encode(self).write(to: Self.url(account), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        try encoder.encode(self).write(to: Self.url(account), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
     }
 }
 /// A refresh grant usually invalidates the previous refresh token the moment it answers, so a
@@ -700,7 +701,7 @@ public actor UsageService {
                 rotated = true
             }
             let usage: UsageResponse
-            do { try checkPermission(); usage = try await api.usage(credentials) }
+            do { try checkPermission(); usage = try await api.usageWithResetCredits(credentials) }
             // A token minted moments ago being refused is not an expiry: rotating again would only
             // burn another refresh token, so the 401 surfaces as-is.
             catch ServiceError.http(401) where !rotated {
@@ -709,7 +710,7 @@ public actor UsageService {
                 let fresh = credentials
                 try RotationPersistence.save { try SharedStorage.save(fresh, account: id, route: route) }
                 try checkPermission()
-                usage = try await api.usage(credentials)
+                usage = try await api.usageWithResetCredits(credentials)
             }
             try checkPermission()
             let result = UsageSnapshot(usage: usage, updatedAt: Date(),

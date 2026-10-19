@@ -124,7 +124,7 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('Button { connect = .picker }', app)
         self.assertEqual(app.count('.sheet(item: $connect)'), 1)
         # The empty state lists every provider, and the keychain-boundary alert still gates ChatGPT.
-        self.assertIn('if model.accounts.isEmpty && model.deepSeekIDs.isEmpty && !model.antigravityInstalled && !model.claudeInstalled {', status)
+        self.assertIn('if model.commandCodeIDs.isEmpty && model.openCodeGoIDs.isEmpty && model.accounts.isEmpty && model.deepSeekIDs.isEmpty && !model.antigravityInstalled && !model.claudeInstalled {', status)
         self.assertIn('Button("知悉风险，继续登录") { model.login() }', connect)
         # No demo mode: it could only show invented numbers.
         self.assertNotIn('体验演示', connect + app)
@@ -146,10 +146,10 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('TimelineView(.periodic(from: .now, by: 60))', connect)
         self.assertIn('Countdown.short(window.reset, now: context.date)', connect)
         self.assertIn('Countdown.resetLine(date, now: context.date)', connect)
-        # The widget is untouched by this change: no brand marks or countdowns leak into it.
+        # Build 42 adds API-provider reset countdowns; App-only brand views still stay out.
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
         widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
-        for token in ['BrandMark', 'Countdown.', 'LogoOpenAI', 'SummaryLine']:
+        for token in ['BrandMark', 'LogoOpenAI', 'SummaryLine']:
             self.assertNotIn(token, views + widget)
     def test_claude_signs_in_with_oauth_and_keeps_no_session_secret(self):
         # Contract change (build 21): the embedded cookie-scraping browser and the manual

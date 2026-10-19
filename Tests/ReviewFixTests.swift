@@ -71,7 +71,7 @@ final class ReviewFixTests: XCTestCase {
         let panel = try reviewSource("App/DeepSeekPanel.swift")
         XCTAssertTrue(app.contains("onUpdateKey: { connect = .deepSeekReplacement(id) }"))
         XCTAssertTrue(routes.contains("case deepSeekReplacement(String)"))
-        XCTAssertTrue(routes.contains("replacing: entry.replacing"))
+        XCTAssertTrue(routes.contains("replacing: entry.replacementBrand == brand ? entry.replacing : nil"))
         XCTAssertTrue(routes.contains("DeepSeekPanel(model: model, replacing: replacing)"))
         XCTAssertTrue(panel.contains("_replacing = State(initialValue: replacing)"))
     }

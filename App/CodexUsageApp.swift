@@ -2,10 +2,10 @@ import SwiftUI
 import WidgetKit
 
 enum AppRefreshTarget: Hashable {
-    case codex(String), deepSeek(String), antigravity, claude, tokensCI(String)
+    case codex(String), commandCode(String), openCodeGo(String), deepSeek(String), antigravity, claude, tokensCI(String)
     var accountID: String {
         switch self {
-        case .codex(let id), .deepSeek(let id): return id
+        case .codex(let id), .commandCode(let id), .openCodeGo(let id), .deepSeek(let id): return id
         case .antigravity: return AntigravityStore.account
         case .claude: return ClaudeStore.id
         case .tokensCI(let id): return "tokensci:" + id
@@ -32,6 +32,8 @@ enum AppRefreshError {
             if error is DecodingError { return "Codex 用量格式异常，保留缓存" }
             if error is URLError { return "Codex 网络连接失败，保留缓存" }
             return "Codex 刷新失败，保留缓存"
+        case .openCodeGo: return (error as? OpenCodeGoError)?.localizedDescription ?? "OpenCode Go 刷新失败，保留缓存"
+        case .commandCode: return (error as? CommandCodeError)?.localizedDescription ?? "Command Code 刷新失败，保留缓存"
         case .deepSeek: return (error as? DeepSeekError)?.localizedDescription ?? "DeepSeek 刷新失败，保留缓存"
         case .antigravity: return (error as? AntigravityError)?.localizedDescription ?? "Antigravity 刷新失败，保留缓存"
         case .claude: return (error as? ClaudeFailure)?.localizedDescription ?? "Claude 刷新失败，保留缓存"
@@ -47,9 +49,15 @@ struct AppRefreshFetchers {
     var antigravity: @Sendable () async throws -> AntigravitySnapshot = { try await AntigravityService.shared.refresh(widget: false) }
     var claude: @Sendable () async throws -> ClaudeSnapshot = { try await ClaudeService.shared.refresh(widget: false) }
     var tokensCI: @Sendable (String) async throws -> TokensCISnapshot = { try await TokensCIService.shared.refresh(username: $0, widget: false) }
+    var openCodeGo: @Sendable (String) async throws -> OpenCodeGoSnapshot = { try await OpenCodeGoService.shared.refresh(id: $0, widget: false) }
+    var commandCode: @Sendable (String) async throws -> CommandCodeSnapshot = { try await CommandCodeService.shared.refresh(id: $0, widget: false) }
 }
 
 @MainActor final class UsageModel: ObservableObject {
+    @Published var openCodeGoIDs: [String] = []
+    @Published var openCodeGoSnapshots: [String: OpenCodeGoSnapshot] = [:]
+    @Published var commandCodeIDs: [String] = []
+    @Published var commandCodeSnapshots: [String: CommandCodeSnapshot] = [:]
     @Published var deepSeekIDs: [String] = []
     @Published var balances: [String: DeepSeekSnapshot] = [:]
     /// DeepSeek accounts whose last refresh failed (from the persisted attempt record), loaded with
@@ -84,6 +92,14 @@ struct AppRefreshFetchers {
         }
     }
     func reloadAccounts() {
+        let nextOpenCodeGoIDs = (try? OpenCodeGoStore.ids()) ?? []
+        let nextOpenCodeGoSnapshots = Dictionary(uniqueKeysWithValues: nextOpenCodeGoIDs.compactMap { id in OpenCodeGoStore.snapshot(id).map { (id, $0) } })
+        if openCodeGoIDs != nextOpenCodeGoIDs { openCodeGoIDs = nextOpenCodeGoIDs }
+        if openCodeGoSnapshots != nextOpenCodeGoSnapshots { openCodeGoSnapshots = nextOpenCodeGoSnapshots }
+        let nextCommandCodeIDs = (try? CommandCodeStore.ids()) ?? []
+        let nextCommandCodeSnapshots = Dictionary(uniqueKeysWithValues: nextCommandCodeIDs.compactMap { id in CommandCodeStore.snapshot(id).map { (id, $0) } })
+        if commandCodeIDs != nextCommandCodeIDs { commandCodeIDs = nextCommandCodeIDs }
+        if commandCodeSnapshots != nextCommandCodeSnapshots { commandCodeSnapshots = nextCommandCodeSnapshots }
         let nextDeepSeekIDs = (try? DeepSeekStore.ids()) ?? []
         let nextBalances = Dictionary(uniqueKeysWithValues: nextDeepSeekIDs.compactMap { id in DeepSeekStore.snapshot(id).map { (id, $0) } })
         try? DashboardStore.publish()
@@ -97,7 +113,7 @@ struct AppRefreshFetchers {
         let nextClaudeSnapshot = ClaudeStore.snapshot()
         let nextTokensCIIDs = TokensCIStore.ids()
         let nextTokensCISnapshots = Dictionary(uniqueKeysWithValues: nextTokensCIIDs.compactMap { id in TokensCIStore.snapshot(id).map { (id, $0) } })
-        let nextSignedIn = !nextAccounts.isEmpty || !nextDeepSeekIDs.isEmpty || nextAntigravityInstalled || nextClaudeInstalled || !nextTokensCIIDs.isEmpty
+        let nextSignedIn = !nextCommandCodeIDs.isEmpty || !nextOpenCodeGoIDs.isEmpty || !nextAccounts.isEmpty || !nextDeepSeekIDs.isEmpty || nextAntigravityInstalled || nextClaudeInstalled || !nextTokensCIIDs.isEmpty
         // ObservableObject publishes even equal assignments. Cache-only reloads should
         // not invalidate every observing view; retain the existing ownership model.
         if deepSeekIDs != nextDeepSeekIDs { deepSeekIDs = nextDeepSeekIDs }
@@ -113,7 +129,7 @@ struct AppRefreshFetchers {
         if tokensCIIDs != nextTokensCIIDs { tokensCIIDs = nextTokensCIIDs }
         if tokensCISnapshots != nextTokensCISnapshots { tokensCISnapshots = nextTokensCISnapshots }
         if signedIn != nextSignedIn { signedIn = nextSignedIn }
-        reloadRefreshAttempts(targets: nextAccounts.map { .codex($0) } + nextDeepSeekIDs.map { .deepSeek($0) }
+        reloadRefreshAttempts(targets: nextCommandCodeIDs.map { .commandCode($0) } + nextOpenCodeGoIDs.map { .openCodeGo($0) } + nextAccounts.map { .codex($0) } + nextDeepSeekIDs.map { .deepSeek($0) }
                               + (nextAntigravityInstalled ? [.antigravity] : []) + (nextClaudeInstalled ? [.claude] : []) + nextTokensCIIDs.map { .tokensCI($0) })
     }
     /// Load persisted feedback outside body; equal reloads emit no UI notifications.
@@ -184,7 +200,7 @@ struct AppRefreshFetchers {
             busy = false; spinning = false
             if background != .invalid { UIApplication.shared.endBackgroundTask(background) }
         }
-        enum Result { case codex(String, UsageSnapshot), deepSeek(String, DeepSeekSnapshot), antigravity(AntigravitySnapshot),
+        enum Result { case commandCode(String, CommandCodeSnapshot), openCodeGo(String, OpenCodeGoSnapshot), codex(String, UsageSnapshot), deepSeek(String, DeepSeekSnapshot), antigravity(AntigravitySnapshot),
                       claude(ClaudeSnapshot), tokensCI(String, TokensCISnapshot), failed(AppRefreshTarget, String), cancelled }
         let selection = target ?? account.map { AppRefreshTarget.codex($0) }
         let full = selection == nil
@@ -192,12 +208,30 @@ struct AppRefreshFetchers {
         let deepSeek: [String]
         if case .codex(let id)? = selection { codexIDs = [id] } else { codexIDs = full ? accounts : [] }
         if case .deepSeek(let id)? = selection { deepSeek = [id] } else { deepSeek = full ? deepSeekIDs : [] }
+        let openCodeGo: [String]
+        if case .openCodeGo(let id)? = selection { openCodeGo = [id] } else { openCodeGo = full ? openCodeGoIDs : [] }
+        let commandCode: [String]
+        if case .commandCode(let id)? = selection { commandCode = [id] } else { commandCode = full ? commandCodeIDs : [] }
         let withAntigravity = selection == .antigravity || (full && antigravityInstalled)
         let withClaude = selection == .claude || (full && claudeInstalled)
         let tokenIDs: [String]
         if case .tokensCI(let id)? = selection { tokenIDs = [id] } else { tokenIDs = full ? tokensCIIDs : [] }
         let fetchers = self.fetchers
         await withTaskGroup(of: Result.self) { group in
+            for id in openCodeGo {
+                group.addTask {
+                    do { return .openCodeGo(id, try await fetchers.openCodeGo(id)) }
+                    catch is CancellationError { return .cancelled }
+                    catch { return .failed(.openCodeGo(id), AppRefreshError.text(error, for: .openCodeGo(id))) }
+                }
+            }
+            for id in commandCode {
+                group.addTask {
+                    do { return .commandCode(id, try await fetchers.commandCode(id)) }
+                    catch is CancellationError { return .cancelled }
+                    catch { return .failed(.commandCode(id), AppRefreshError.text(error, for: .commandCode(id))) }
+                }
+            }
             for id in tokenIDs {
                 group.addTask {
                     do { return .tokensCI(id, try await fetchers.tokensCI(id)) }
@@ -236,6 +270,8 @@ struct AppRefreshFetchers {
             for await result in group {
                 switch result {
                 case let .codex(id, value): snapshots[id] = value; refreshErrors[.codex(id)] = nil
+                case let .openCodeGo(id, value): openCodeGoSnapshots[id] = value; refreshErrors[.openCodeGo(id)] = nil
+                case let .commandCode(id, value): commandCodeSnapshots[id] = value; refreshErrors[.commandCode(id)] = nil
                 case let .deepSeek(id, value): balances[id] = value; refreshErrors[.deepSeek(id)] = nil; deepSeekFailed.remove(id)
                 case let .antigravity(value): antigravity = value; refreshErrors[.antigravity] = nil
                 case let .claude(value): claudeSnapshot = value; refreshErrors[.claude] = nil
@@ -296,6 +332,14 @@ struct AppRefreshFetchers {
         catch { message = error.localizedDescription }
     }
     // The card "⋯" menus remove credentials here (build 27 moved these out of the sign-in panels).
+    func removeOpenCodeGo(_ id: String) async {
+        do { try await OpenCodeGoService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
+        catch { message = "移除失败，请解锁后重试" }
+    }
+    func removeCommandCode(_ id: String) async {
+        do { try await CommandCodeService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
+        catch { message = "移除失败，请解锁后重试" }
+    }
     func removeDeepSeek(_ id: String) async {
         do { try await DeepSeekService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
         catch { message = "移除失败，请解锁后重试" }
@@ -603,6 +647,26 @@ struct ContentView: View {
                                 busy: model.busy, refreshError: model.refreshErrors[.deepSeek(id)],
                                 accountContext: "DeepSeek · 账号 \((model.deepSeekIDs.firstIndex(of: id) ?? 0) + 1)"))))
         }
+        for id in model.openCodeGoIDs {
+            cards.append((cardKey("opencodego", id), AnyView(APIUsageAccountCard(brand: .opencodego,
+                snapshot: model.openCodeGoSnapshots[id].map { ProviderCardData($0) },
+                expanded: expandedBinding("opencodego:" + id), palette: palette,
+                onRefresh: { Task { await model.refresh(target: .openCodeGo(id)) } },
+                onUpdateKey: { connect = .apiKeyReplacement(.opencodego, id) },
+                onRemove: { Task { await model.removeOpenCodeGo(id) } }, busy: model.busy,
+                refreshError: model.refreshErrors[.openCodeGo(id)],
+                accountContext: "OpenCode Go · 账号 \((model.openCodeGoIDs.firstIndex(of: id) ?? 0) + 1)"))))
+        }
+        for id in model.commandCodeIDs {
+            cards.append((cardKey("commandcode", id), AnyView(APIUsageAccountCard(brand: .commandcode,
+                snapshot: model.commandCodeSnapshots[id].map { ProviderCardData($0) },
+                expanded: expandedBinding("commandcode:" + id), palette: palette,
+                onRefresh: { Task { await model.refresh(target: .commandCode(id)) } },
+                onUpdateKey: { connect = .apiKeyReplacement(.commandcode, id) },
+                onRemove: { Task { await model.removeCommandCode(id) } }, busy: model.busy,
+                refreshError: model.refreshErrors[.commandCode(id)],
+                accountContext: "Command Code · 账号 \((model.commandCodeIDs.firstIndex(of: id) ?? 0) + 1)"))))
+        }
         if model.antigravityInstalled {
             cards.append((cardKey("antigravity", nil), AnyView(AntigravityCard(snapshot: model.antigravity,
                             expanded: expandedBinding("antigravity"), palette: palette,
@@ -699,6 +763,8 @@ struct ContentView: View {
             if model.signedIn && !model.signingIn { Task { await model.autoRefresh() } }
         }
         // Accounts added or removed change which rows the widget may refresh.
+        .onChange(of: model.openCodeGoIDs) { _, _ in Task { await reloadAuth() } }
+        .onChange(of: model.commandCodeIDs) { _, _ in Task { await reloadAuth() } }
         .onChange(of: model.accounts) { _, _ in Task { await reloadAuth() } }
         .onChange(of: model.deepSeekIDs) { _, _ in Task { await reloadAuth() } }
     }
@@ -806,7 +872,7 @@ struct ContentView: View {
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
         }
-        if model.accounts.isEmpty && model.deepSeekIDs.isEmpty && !model.antigravityInstalled && !model.claudeInstalled {
+        if model.commandCodeIDs.isEmpty && model.openCodeGoIDs.isEmpty && model.accounts.isEmpty && model.deepSeekIDs.isEmpty && !model.antigravityInstalled && !model.claudeInstalled {
             EmptyConnectView(palette: palette) { connect = .picker }
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
@@ -1057,7 +1123,19 @@ struct AccountCard: View {
                             if credits.balance != nil { AppRow(label: "额度", value: Money.text(credits.balance, currency: credits.currency), palette: palette) }
                             if let unlimited = credits.unlimited { AppRow(label: "无限额度", value: unlimited ? "是" : "否", palette: palette) }
                         }
-                        if let count = snapshot?.usage.rateLimitResetCredits?.availableCount { AppRow(label: "重置额度", value: String(count), palette: palette) }
+                        TimelineView(.periodic(from: .now, by: 60)) { context in
+                            AppRow(label: "重置额度", value: (snapshot?.usage.resetCreditDetails.map { $0.usable(now: context.date).count } ?? snapshot?.usage.rateLimitResetCredits?.availableCount).map { "\($0) 张" } ?? "—", palette: palette)
+                        }
+                        if let details = snapshot?.usage.resetCreditDetails {
+                            TimelineView(.periodic(from: .now, by: 60)) { context in
+                                if let expiry = details.usable(now: context.date).first?.expiresAt {
+                                    Text("最早 " + Countdown.resetLine(expiry, now: context.date).replacingOccurrences(of: "重置", with: "过期"))
+                                        .font(.footnote).foregroundStyle(palette.secondary)
+                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                }
+                            }
+                            if let total = details.totalEarnedCount { AppRow(label: "累计获得", value: String(total), palette: palette) }
+                        }
                         AppRow(label: "更新时间", value: updated, palette: palette)
                     }
                 }

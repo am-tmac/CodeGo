@@ -204,6 +204,7 @@ public struct UsageResponse: Codable, Equatable, Sendable {
     public let rateLimit: RateLimit?
     public let credits: UsageCredits?
     public let rateLimitResetCredits: UsageResetCredits?
+    public var resetCreditDetails: CodexResetCredits? = nil
     public struct RateLimit: Codable, Equatable, Sendable {
         public let primaryWindow: UsageWindow?
         public let secondaryWindow: UsageWindow?
@@ -212,6 +213,7 @@ public struct UsageResponse: Codable, Equatable, Sendable {
     enum CodingKeys: String, CodingKey {
         case planType = "plan_type", rateLimit = "rate_limit"
         case credits, rateLimitResetCredits = "rate_limit_reset_credits"
+        case resetCreditDetails
     }
 }
 /// Money formatting for balances that come back in their own currency. Fixed two decimals,

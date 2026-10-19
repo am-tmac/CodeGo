@@ -6,12 +6,14 @@ import SwiftUI
 /// One provider's look: its official mark (App-only asset catalog) and its meter colours.
 /// Codex keeps the palette's original blue so its card is pixel-identical to before.
 enum ServiceBrand: String, CaseIterable, Identifiable {
-    case codex, claude, deepseek, antigravity
+    case codex, claude, deepseek, antigravity, opencodego, commandcode
     var id: String { rawValue }
     var title: String {
         switch self {
         case .codex: return "Codex"
         case .claude: return "Claude"
+        case .opencodego: return "OpenCode Go"
+        case .commandcode: return "Command Code"
         case .deepseek: return "DeepSeek"
         case .antigravity: return "Antigravity"
         }
@@ -20,6 +22,8 @@ enum ServiceBrand: String, CaseIterable, Identifiable {
         switch self {
         case .codex: return "ChatGPT 设备代码"
         case .claude: return "Claude 账号登录"
+        case .opencodego: return "API Key 订阅额度"
+        case .commandcode: return "API Key 订阅额度"
         case .deepseek: return "API Key 余额"
         case .antigravity: return "Google 账号登录"
         }
@@ -28,6 +32,8 @@ enum ServiceBrand: String, CaseIterable, Identifiable {
         switch self {
         case .codex: return "用 ChatGPT 账号授权，查看 5 小时和每周额度。"
         case .claude: return "登录 Claude 账号，查看 5 小时和 7 天用量。"
+        case .opencodego: return "保存 OpenCode Go API Key，查看订阅额度。"
+        case .commandcode: return "保存 Command Code API Key，查看订阅额度。"
         case .deepseek: return "保存 DeepSeek API Key，查看 API 平台余额。"
         case .antigravity: return "登录 Google 账号，查看 Antigravity 模型额度。"
         }
@@ -38,6 +44,8 @@ enum ServiceBrand: String, CaseIterable, Identifiable {
         switch self {
         case .codex: return "LogoOpenAI"
         case .claude: return "LogoClaude"
+        case .opencodego: return "LogoOpenCodeGo"
+        case .commandcode: return "LogoCommandCode"
         case .deepseek: return "LogoDeepSeek"
         case .antigravity: return "LogoAntigravity"
         }
@@ -62,7 +70,7 @@ struct BrandMark: View {
     var size: CGFloat = 24
     var body: some View {
         Group {
-            if brand == .codex {
+            if brand == .codex || brand == .opencodego || brand == .commandcode {
                 Image(brand.logoAsset).renderingMode(.template).resizable().foregroundStyle(palette.primary)
             } else {
                 Image(brand.logoAsset).renderingMode(.original).resizable()
@@ -155,8 +163,15 @@ enum ConnectEntry: Identifiable, Hashable {
     case tokensCI
     case service(ServiceBrand)
     case deepSeekReplacement(String)
+    case apiKeyReplacement(ServiceBrand, String)
+    var replacementBrand: ServiceBrand? {
+        if case .deepSeekReplacement = self { return .deepseek }
+        if case .apiKeyReplacement(let brand, _) = self { return brand }
+        return nil
+    }
     var replacing: String? {
         if case .deepSeekReplacement(let id) = self { return id }
+        if case .apiKeyReplacement(_, let id) = self { return id }
         return nil
     }
     var id: String {
@@ -165,6 +180,7 @@ enum ConnectEntry: Identifiable, Hashable {
         case .tokensCI: return "tokensCI"
         case .service(let brand): return brand.rawValue
         case .deepSeekReplacement(let id): return "deepseek:" + id
+        case .apiKeyReplacement(let brand, let id): return brand.rawValue + ":" + id
         }
     }
 }
@@ -179,18 +195,21 @@ struct ConnectSheet: View {
     var body: some View {
         NavigationStack(path: $path) {
             picker
-                .navigationDestination(for: ServiceBrand.self) { brand in ConnectServicePage(model: model, brand: brand, replacing: entry.replacing) }
+                .navigationDestination(for: ServiceBrand.self) { brand in ConnectServicePage(model: model, brand: brand, replacing: entry.replacementBrand == brand ? entry.replacing : nil) }
         }
         .onAppear {
             guard path.isEmpty else { return }
             if case .service(let brand) = entry { path = [brand] }
             if case .deepSeekReplacement = entry { path = [.deepseek] }
+            if case .apiKeyReplacement(let brand, _) = entry { path = [brand] }
         }
     }
     func connectedCount(_ brand: ServiceBrand) -> Int {
         switch brand {
         case .codex: return model.accounts.count
         case .claude: return model.claudeInstalled ? 1 : 0
+        case .opencodego: return model.openCodeGoIDs.count
+        case .commandcode: return model.commandCodeIDs.count
         case .deepseek: return model.deepSeekIDs.count
         case .antigravity: return model.antigravityInstalled ? 1 : 0
         }
@@ -203,7 +222,7 @@ struct ConnectSheet: View {
                         NavigationLink(value: brand) { tile(brand) }.buttonStyle(.plain)
                     }
                 }
-                Text("Codex 和 DeepSeek 可以连接多个账号\n令牌只存本机钥匙串")
+                Text("API Key 服务可以连接多个账号\n令牌只存本机钥匙串")
                     .scaledFont(13, relativeTo: .footnote).foregroundStyle(palette.tertiary)
                     .multilineTextAlignment(.center)
             }
@@ -273,7 +292,9 @@ struct ConnectServicePage: View {
                 switch brand {
                 case .codex: CodexConnectPanel(model: model, palette: palette)
                 case .claude: ClaudePanel(model: model, palette: palette)
-                case .deepseek: DeepSeekPanel(model: model, replacing: replacing)
+                case .opencodego: OpenCodeGoPanel(model: model, replacing: replacing)
+        case .commandcode: CommandCodePanel(model: model, replacing: replacing)
+        case .deepseek: DeepSeekPanel(model: model, replacing: replacing)
                 case .antigravity: AntigravityPanel(model: model, palette: palette)
                 }
                 if let message = model.message {
@@ -355,7 +376,7 @@ struct EmptyConnectView: View {
             }
             .accessibilityHidden(true)
             Text("连接账号").scaledFont(24, weight: .bold, relativeTo: .title2).foregroundStyle(palette.primary).padding(.top, 28)
-            Text("点「连接账号」添加 Codex、Claude、DeepSeek 或 Antigravity，每个账号会在这里单独显示额度。")
+            Text("点「连接账号」添加 Codex、Claude、DeepSeek、Antigravity、OpenCode Go 或 Command Code，每个账号会在这里单独显示额度。")
                 .scaledFont(15, relativeTo: .subheadline).foregroundStyle(palette.secondary)
                 .multilineTextAlignment(.center).padding(.top, 10)
             Button(action: onConnect) {

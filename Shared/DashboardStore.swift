@@ -10,6 +10,8 @@ struct DashboardAccount: Codable, Equatable, Identifiable {
     var title: String {
         let name: String
         switch provider {
+        case "opencodego": name = "OpenCode Go"
+        case "commandcode": name = "Command Code"
         case "deepseek": name = "DeepSeek"
         case "antigravity": name = "Antigravity"
         case "claude": name = "Claude"
@@ -32,6 +34,12 @@ enum DashboardStore {
         }
         rows += try DeepSeekStore.ids().enumerated().map { index, id in
             DashboardAccount(id: id, provider: "deepseek", ordinal: index + 1, credentialGroup: DeepSeekStore.credentialGroup(id))
+        }
+        rows += try OpenCodeGoStore.ids().enumerated().map { index, id in
+            DashboardAccount(id: id, provider: "opencodego", ordinal: index + 1, credentialGroup: OpenCodeGoStore.credentialGroup(id))
+        }
+        rows += try CommandCodeStore.ids().enumerated().map { index, id in
+            DashboardAccount(id: id, provider: "commandcode", ordinal: index + 1, credentialGroup: CommandCodeStore.credentialGroup(id))
         }
         // tokens.ci profiles are keyed by username, which is also the account id the widget uses.
         rows += TokensCIStore.ids().enumerated().map { index, id in

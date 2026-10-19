@@ -12,6 +12,8 @@ actor HeldUsageTransport: HTTPTransport {
     }
     func finish() { response?.resume(); response = nil }
     func send(_ request: URLRequest) async throws -> (Data, Int) {
+        // Only the primary usage fetch is held. Supplementary credits are independent.
+        if request.url?.path.hasSuffix("rate-limit-reset-credits") == true { return (Data(), 503) }
         count += 1
         await withCheckedContinuation { continuation in
             response = continuation

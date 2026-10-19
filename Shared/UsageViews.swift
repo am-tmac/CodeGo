@@ -67,6 +67,8 @@ struct RefreshDashboardIntent: AppIntent {
 enum WidgetRefresh {
     static func one(id: String, provider: String, notifyProgress: Bool = false) async throws {
         switch provider {
+        case "opencodego": _ = try await OpenCodeGoService.shared.refresh(id: id)
+        case "commandcode": _ = try await CommandCodeService.shared.refresh(id: id)
         case "deepseek": _ = try await DeepSeekService.shared.refresh(id: id)
         case "claude": _ = try await ClaudeService.shared.refresh()
         case "antigravity": _ = try await AntigravityService.shared.refresh()
@@ -435,17 +437,17 @@ struct DeepSeekStackedCardView: View {
 /// Per-service meter colours, shared by the App cards and the widget (build 28) so the two can
 /// never drift apart. Codex and DeepSeek keep the original blue; ≤20% left turns danger red.
 enum MeterTint: String {
-    case codex, claude, deepseek, antigravity
+    case codex, claude, deepseek, antigravity, opencodego, commandcode
     func lit(dark: Bool) -> Color {
         switch self {
-        case .codex, .deepseek: return dark ? Color(red: 0.212, green: 0.620, blue: 0.961) : Color(red: 0.129, green: 0.522, blue: 0.929)
+        case .codex, .deepseek, .opencodego, .commandcode: return dark ? Color(red: 0.212, green: 0.620, blue: 0.961) : Color(red: 0.129, green: 0.522, blue: 0.929)
         case .claude: return dark ? Color(red: 0.910, green: 0.537, blue: 0.290) : Color(red: 0.851, green: 0.467, blue: 0.169)
         case .antigravity: return dark ? Color(red: 0.208, green: 0.753, blue: 0.541) : Color(red: 0.122, green: 0.620, blue: 0.431)
         }
     }
     func rest(dark: Bool) -> Color {
         switch self {
-        case .codex, .deepseek: return dark ? Color(red: 0.133, green: 0.204, blue: 0.282) : Color(red: 0.851, green: 0.878, blue: 0.918)
+        case .codex, .deepseek, .opencodego, .commandcode: return dark ? Color(red: 0.133, green: 0.204, blue: 0.282) : Color(red: 0.851, green: 0.878, blue: 0.918)
         case .claude: return dark ? Color(red: 0.239, green: 0.165, blue: 0.114) : Color(red: 0.945, green: 0.878, blue: 0.824)
         case .antigravity: return dark ? Color(red: 0.098, green: 0.227, blue: 0.176) : Color(red: 0.827, green: 0.922, blue: 0.882)
         }
@@ -574,6 +576,7 @@ struct ClaudeCompactView: View {
 }
 
 struct CompactUsageView: View {
+    var showResetCredits = false
     let snapshot: UsageSnapshot?
     var failed = false
     var refreshing = false
@@ -588,6 +591,10 @@ struct CompactUsageView: View {
             // pushed out by a longer label or by a missing 5-hour window.
             row("5h", window: snapshot?.usage.rateLimit?.primaryWindow)
             row("7d", window: snapshot?.usage.rateLimit?.secondaryWindow)
+            if showResetCredits {
+                Text("重置额度 " + ((snapshot?.usage.resetCreditDetails.map { $0.usable().count } ?? snapshot?.usage.rateLimitResetCredits?.availableCount).map(String.init) ?? "—"))
+                    .font(.system(size: 9)).foregroundStyle(palette.secondary)
+            }
             Spacer(minLength: 0)
             HStack(spacing: 3) {
                 if let label = snapshot?.accountLabel, !label.isEmpty {
@@ -646,6 +653,42 @@ struct DeepSeekBalanceView: View {
                 Spacer(minLength: 0)
                 Text("打开 App 添加 Key").font(.system(size: 9)).foregroundStyle(palette.secondary)
             }
+        }
+    }
+}
+
+
+struct APIUsageCompactView: View {
+    let title: String
+    let snapshot: ProviderCardData?
+    let command: Bool
+    let failed: Bool
+    let cacheOnly: Bool
+    var palette: ThemePalette
+    var display: UsageDisplay
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(palette.primary).lineLimit(1).minimumScaleFactor(0.7)
+            ForEach(snapshot?.rows ?? ProviderCardData.emptyRows(command: command)) { row in
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 2) {
+                        Text(row.label)
+                        Spacer(minLength: 0)
+                        Text(display.text(row.window?.remaining)).monospacedDigit()
+                    }.font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.primary)
+                    QuotaBar(remaining: row.window?.remaining, tint: command ? .commandcode : .opencodego, display: display, height: 3, palette: palette)
+                    Text(row.money.map { "剩余 " + $0 } ?? Countdown.short(row.reset ?? row.window?.resetDate))
+                        .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.7)
+                    if row.money != nil {
+                        Text(Countdown.short(row.reset ?? row.window?.resetDate)).font(.system(size: 8)).foregroundStyle(palette.secondary)
+                    }
+                }
+            }
+            if let note = snapshot?.grantNote { Text(note).font(.system(size: 8)).foregroundStyle(palette.secondary) }
+            if let purchased = snapshot?.purchased { Text("加购 " + purchased).font(.system(size: 8)).foregroundStyle(palette.secondary) }
+            Spacer(minLength: 0)
+            Text(failed ? "刷新失败 · 保留缓存" : (cacheOnly ? "仅缓存 · 打开 App 刷新" : (snapshot?.stale == true ? "数据已过期" : "更新 " + (snapshot.map { RelativeTime.stamp($0.updatedAt) } ?? "—"))))
+                .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1)
         }
     }
 }

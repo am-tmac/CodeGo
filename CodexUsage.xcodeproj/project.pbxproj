@@ -10,15 +10,21 @@
 		00478C36D86329DA28E586A4 /* UsageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAEE02696E0B9E04DAC4F70B /* UsageViews.swift */; };
 		0442AD11680A7CE7E8C9C34F /* Antigravity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33456D0E9C23C585D3E4BCBA /* Antigravity.swift */; };
 		0D39B3DC0755976846686274 /* UsageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0648B259B2E5AC103950F9D8 /* UsageViews.swift */; };
+		10B25C0B7980CFAB81951167 /* ProviderParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACA203CA12286A3532930AE /* ProviderParsing.swift */; };
 		1508BA9AE870EE5E55307F41 /* DeepSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 929294C8CE82485447F5804A /* DeepSeek.swift */; };
 		176EEBE2096C840A89049621 /* StorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB7A056A23AC51A1A48014D /* StorageTests.swift */; };
+		1A4B20300BD00E37F3BB8268 /* OpenCodeGoPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B71FDE1257B14BD3B884731D /* OpenCodeGoPanel.swift */; };
 		1A8D3F85E43626C814130CD3 /* CardOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F5263D3D4B5BF06E85260F /* CardOrder.swift */; };
 		1F609C33E571A37C24AA1342 /* TokensCIPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70C99753BC98FF57862F3F7 /* TokensCIPanel.swift */; };
+		1FC4FCD57E454165B81EA4F9 /* OpenCodeGo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BD2678BEE827643E1E9127E /* OpenCodeGo.swift */; };
 		235D7BB55D1F7FE9E346B7C0 /* Claude.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93E08EC15ADD1F087EEE98F7 /* Claude.swift */; };
+		24676C44ABF28EDB620B1FF9 /* ProviderCardData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BEB474558E81BFBE548809 /* ProviderCardData.swift */; };
 		254EBF94AC088682735CEE23 /* Antigravity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33456D0E9C23C585D3E4BCBA /* Antigravity.swift */; };
 		25AA107B2BB63A819B15AD88 /* CodexUsageWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B42FBFB7A029AABBD0763F3 /* CodexUsageWidget.swift */; };
+		2617C50281BD9A392B8E0051 /* ProviderParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACA203CA12286A3532930AE /* ProviderParsing.swift */; };
 		268094AE76A94CCA2714F804 /* AuthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D0AEF082D7618AB0F15D084 /* AuthTests.swift */; };
 		27A420E112C76FDC74700913 /* Claude.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93E08EC15ADD1F087EEE98F7 /* Claude.swift */; };
+		2888761F29DEA14C0C1C336E /* CommandCodePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59DBCD52896F97F82669D636 /* CommandCodePanel.swift */; };
 		2A18214AD926C754D852A9AE /* AntigravityLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF659305AE947F0AAD8828AC /* AntigravityLogin.swift */; };
 		321EA855C3E0C275829C17AC /* ExtraProviderPanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99BFBB7DC77C4557E2AFEC99 /* ExtraProviderPanels.swift */; };
 		39847F36E92C3E0853204C21 /* AuthAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F577D9F517AE9AA523A28EE2 /* AuthAPI.swift */; };
@@ -27,22 +33,30 @@
 		4BDC7DE3610CDA11CA606FA2 /* AuthAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3DCF62F3AF0B9E318E178C /* AuthAPI.swift */; };
 		4D3054D5B0144856B2FE05AF /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95667A8A372765AE0F8B8BDE /* Storage.swift */; };
 		4E6D2D178F8E50DADD73C2EA /* ConnectViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E667CD18B332B5450FEDAA /* ConnectViews.swift */; };
+		55DE942DF0CDA35F3E8D7342 /* OpenCodeGo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BD2678BEE827643E1E9127E /* OpenCodeGo.swift */; };
 		5C8553A8CCC601D727E6D8F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5F05FAA8AB62995F8E75D7F /* Foundation.framework */; };
+		5C997457C6A1F8DD280C421E /* Build42ProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5E75F582FC9FC3B7F79A80 /* Build42ProviderTests.swift */; };
 		67B75D7E43C4B513A4EA1D1E /* TokensCIHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95956BCCD11C2C7E5E568CD /* TokensCIHistory.swift */; };
 		6B77E310F08B55BD49ED82C7 /* CardOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F5263D3D4B5BF06E85260F /* CardOrder.swift */; };
 		6E8E758810BEE6EBAD3E5727 /* TokensCIAnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8506ED341777CDC19D0EDFFE /* TokensCIAnalyticsView.swift */; };
+		832D69D3A24C473D04E5D11B /* APIUsageAccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63D1619D0D63997836D8351D /* APIUsageAccountCard.swift */; };
+		85A34DDEA4E4B2E19FF4FFE0 /* CommandCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11F6E231FB70E574AAD4D59 /* CommandCode.swift */; };
 		8764F309F76AD1953284E475 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D6D0ED7AD91711F0F63CA6B4 /* Assets.xcassets */; };
 		8941A9F9AA9081E155C32B0E /* DeepSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = C431846C75F38BDB4590484C /* DeepSeek.swift */; };
 		8E6BBF3B231086C2552CDF3E /* ProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1542293685BE183E36A0F586 /* ProtocolTests.swift */; };
 		8F22B810430A68A596CC729A /* DeepSeekPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B47ECDA55A0BF4542FC9D84 /* DeepSeekPanel.swift */; };
 		9EB9DCACD6E5CA8CD257C59E /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE635B733CCD965A35FB792 /* Models.swift */; };
 		A746F52FFCE4E6735F174638 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902612FF6B38D7C8C4B207A4 /* Models.swift */; };
+		AF79FE94DB26F595E458109C /* CodexResetCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563B2DA590EFBD1B44E72ADF /* CodexResetCredits.swift */; };
 		B2D74EB8BD0B3A0A7E088DA4 /* DashboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22744EF43CFCA5066509FC3D /* DashboardStore.swift */; };
 		B6C293C1CDA342CD44EFEA21 /* ClaudePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90CB4B875528CAC5F08F7D38 /* ClaudePanel.swift */; };
 		B70B623D25877DACDECA3A85 /* TokensCI.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF189C795DDC921FE033C5E1 /* TokensCI.swift */; };
 		C12527935E17C54AFA1686C8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5F05FAA8AB62995F8E75D7F /* Foundation.framework */; };
+		C1B33F0901944569BE19E929 /* CommandCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11F6E231FB70E574AAD4D59 /* CommandCode.swift */; };
+		C32F6A062C8DB61B53D7BEED /* ProviderCardData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BEB474558E81BFBE548809 /* ProviderCardData.swift */; };
 		C3E620FA54E9A07CA0081255 /* CodexUsageWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 9A042239D9C1457305BA9551 /* CodexUsageWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		DA32B8DB796CE80906494B42 /* CodexUsageApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7E958362A0EF7F09A7D22A /* CodexUsageApp.swift */; };
+		E0BCE1F6D47FBA70AC331AA8 /* CodexResetCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563B2DA590EFBD1B44E72ADF /* CodexResetCredits.swift */; };
 		E2525EBEB99C1EBBA25BDC66 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48435CDF0B62ED2ADB4F3084 /* Storage.swift */; };
 		EB30FC5B706A9F47EDFA9F74 /* DashboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8EA501153531B2CCF3BA7CB /* DashboardStore.swift */; };
 		EBDB5C8A3D8C8AE677525E5B /* TokensCI.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF189C795DDC921FE033C5E1 /* TokensCI.swift */; };
@@ -82,18 +96,25 @@
 
 /* Begin PBXFileReference section */
 		0648B259B2E5AC103950F9D8 /* UsageViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UsageViews.swift; path = Shared/UsageViews.swift; sourceTree = "<group>"; };
+		0ACA203CA12286A3532930AE /* ProviderParsing.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProviderParsing.swift; path = Shared/ProviderParsing.swift; sourceTree = "<group>"; };
 		0B42FBFB7A029AABBD0763F3 /* CodexUsageWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CodexUsageWidget.swift; path = Widget/CodexUsageWidget.swift; sourceTree = "<group>"; };
 		0D3DCF62F3AF0B9E318E178C /* AuthAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AuthAPI.swift; path = Shared/AuthAPI.swift; sourceTree = "<group>"; };
 		1542293685BE183E36A0F586 /* ProtocolTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProtocolTests.swift; path = Tests/ProtocolTests.swift; sourceTree = "<group>"; };
 		1C8DD105E862C1C67ED0BBCA /* CodexUsageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CodexUsageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		22744EF43CFCA5066509FC3D /* DashboardStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DashboardStore.swift; path = Shared/DashboardStore.swift; sourceTree = "<group>"; };
 		33456D0E9C23C585D3E4BCBA /* Antigravity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Antigravity.swift; path = Shared/Antigravity.swift; sourceTree = "<group>"; };
+		47BEB474558E81BFBE548809 /* ProviderCardData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProviderCardData.swift; path = Shared/ProviderCardData.swift; sourceTree = "<group>"; };
 		48435CDF0B62ED2ADB4F3084 /* Storage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Storage.swift; path = Shared/Storage.swift; sourceTree = "<group>"; };
 		4D0AEF082D7618AB0F15D084 /* AuthTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AuthTests.swift; path = Tests/AuthTests.swift; sourceTree = "<group>"; };
+		563B2DA590EFBD1B44E72ADF /* CodexResetCredits.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CodexResetCredits.swift; path = Shared/CodexResetCredits.swift; sourceTree = "<group>"; };
+		59DBCD52896F97F82669D636 /* CommandCodePanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CommandCodePanel.swift; path = App/CommandCodePanel.swift; sourceTree = "<group>"; };
 		5B47ECDA55A0BF4542FC9D84 /* DeepSeekPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DeepSeekPanel.swift; path = App/DeepSeekPanel.swift; sourceTree = "<group>"; };
+		5BD2678BEE827643E1E9127E /* OpenCodeGo.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OpenCodeGo.swift; path = Shared/OpenCodeGo.swift; sourceTree = "<group>"; };
+		63D1619D0D63997836D8351D /* APIUsageAccountCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = APIUsageAccountCard.swift; path = App/APIUsageAccountCard.swift; sourceTree = "<group>"; };
 		69EE60B5D8B8A2384FCDA1B9 /* UsageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UsageTests.swift; path = Tests/UsageTests.swift; sourceTree = "<group>"; };
 		7F1435C9DE821FC5297BA349 /* CodexUsage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodexUsage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8506ED341777CDC19D0EDFFE /* TokensCIAnalyticsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TokensCIAnalyticsView.swift; path = App/TokensCIAnalyticsView.swift; sourceTree = "<group>"; };
+		8A5E75F582FC9FC3B7F79A80 /* Build42ProviderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Build42ProviderTests.swift; path = Tests/Build42ProviderTests.swift; sourceTree = "<group>"; };
 		902612FF6B38D7C8C4B207A4 /* Models.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Models.swift; path = Shared/Models.swift; sourceTree = "<group>"; };
 		90CB4B875528CAC5F08F7D38 /* ClaudePanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ClaudePanel.swift; path = App/ClaudePanel.swift; sourceTree = "<group>"; };
 		929294C8CE82485447F5804A /* DeepSeek.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DeepSeek.swift; path = Shared/DeepSeek.swift; sourceTree = "<group>"; };
@@ -101,12 +122,14 @@
 		95667A8A372765AE0F8B8BDE /* Storage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Storage.swift; path = Shared/Storage.swift; sourceTree = "<group>"; };
 		99BFBB7DC77C4557E2AFEC99 /* ExtraProviderPanels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExtraProviderPanels.swift; path = App/ExtraProviderPanels.swift; sourceTree = "<group>"; };
 		9A042239D9C1457305BA9551 /* CodexUsageWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CodexUsageWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B71FDE1257B14BD3B884731D /* OpenCodeGoPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OpenCodeGoPanel.swift; path = App/OpenCodeGoPanel.swift; sourceTree = "<group>"; };
 		B95956BCCD11C2C7E5E568CD /* TokensCIHistory.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TokensCIHistory.swift; path = Shared/TokensCIHistory.swift; sourceTree = "<group>"; };
 		BF659305AE947F0AAD8828AC /* AntigravityLogin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AntigravityLogin.swift; path = App/AntigravityLogin.swift; sourceTree = "<group>"; };
 		C431846C75F38BDB4590484C /* DeepSeek.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DeepSeek.swift; path = Shared/DeepSeek.swift; sourceTree = "<group>"; };
 		C5F05FAA8AB62995F8E75D7F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		C70C99753BC98FF57862F3F7 /* TokensCIPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TokensCIPanel.swift; path = App/TokensCIPanel.swift; sourceTree = "<group>"; };
 		C8EA501153531B2CCF3BA7CB /* DashboardStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DashboardStore.swift; path = Shared/DashboardStore.swift; sourceTree = "<group>"; };
+		D11F6E231FB70E574AAD4D59 /* CommandCode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CommandCode.swift; path = Shared/CommandCode.swift; sourceTree = "<group>"; };
 		D2E667CD18B332B5450FEDAA /* ConnectViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ConnectViews.swift; path = App/ConnectViews.swift; sourceTree = "<group>"; };
 		D2F5263D3D4B5BF06E85260F /* CardOrder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CardOrder.swift; path = Shared/CardOrder.swift; sourceTree = "<group>"; };
 		D6D0ED7AD91711F0F63CA6B4 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = App/Assets.xcassets; sourceTree = "<group>"; };
@@ -192,6 +215,15 @@
 				C70C99753BC98FF57862F3F7 /* TokensCIPanel.swift */,
 				B95956BCCD11C2C7E5E568CD /* TokensCIHistory.swift */,
 				8506ED341777CDC19D0EDFFE /* TokensCIAnalyticsView.swift */,
+				8A5E75F582FC9FC3B7F79A80 /* Build42ProviderTests.swift */,
+				0ACA203CA12286A3532930AE /* ProviderParsing.swift */,
+				563B2DA590EFBD1B44E72ADF /* CodexResetCredits.swift */,
+				5BD2678BEE827643E1E9127E /* OpenCodeGo.swift */,
+				D11F6E231FB70E574AAD4D59 /* CommandCode.swift */,
+				47BEB474558E81BFBE548809 /* ProviderCardData.swift */,
+				B71FDE1257B14BD3B884731D /* OpenCodeGoPanel.swift */,
+				59DBCD52896F97F82669D636 /* CommandCodePanel.swift */,
+				63D1619D0D63997836D8351D /* APIUsageAccountCard.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -335,6 +367,7 @@
 				176EEBE2096C840A89049621 /* StorageTests.swift in Sources */,
 				268094AE76A94CCA2714F804 /* AuthTests.swift in Sources */,
 				8E6BBF3B231086C2552CDF3E /* ProtocolTests.swift in Sources */,
+				5C997457C6A1F8DD280C421E /* Build42ProviderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,6 +387,11 @@
 				235D7BB55D1F7FE9E346B7C0 /* Claude.swift in Sources */,
 				EBDB5C8A3D8C8AE677525E5B /* TokensCI.swift in Sources */,
 				4263EACC074D7FF449685565 /* TokensCIHistory.swift in Sources */,
+				10B25C0B7980CFAB81951167 /* ProviderParsing.swift in Sources */,
+				AF79FE94DB26F595E458109C /* CodexResetCredits.swift in Sources */,
+				55DE942DF0CDA35F3E8D7342 /* OpenCodeGo.swift in Sources */,
+				85A34DDEA4E4B2E19FF4FFE0 /* CommandCode.swift in Sources */,
+				C32F6A062C8DB61B53D7BEED /* ProviderCardData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -380,6 +418,14 @@
 				1F609C33E571A37C24AA1342 /* TokensCIPanel.swift in Sources */,
 				67B75D7E43C4B513A4EA1D1E /* TokensCIHistory.swift in Sources */,
 				6E8E758810BEE6EBAD3E5727 /* TokensCIAnalyticsView.swift in Sources */,
+				2617C50281BD9A392B8E0051 /* ProviderParsing.swift in Sources */,
+				E0BCE1F6D47FBA70AC331AA8 /* CodexResetCredits.swift in Sources */,
+				1FC4FCD57E454165B81EA4F9 /* OpenCodeGo.swift in Sources */,
+				C1B33F0901944569BE19E929 /* CommandCode.swift in Sources */,
+				24676C44ABF28EDB620B1FF9 /* ProviderCardData.swift in Sources */,
+				1A4B20300BD00E37F3BB8268 /* OpenCodeGoPanel.swift in Sources */,
+				2888761F29DEA14C0C1C336E /* CommandCodePanel.swift in Sources */,
+				832D69D3A24C473D04E5D11B /* APIUsageAccountCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -412,7 +458,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
@@ -422,7 +468,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER)";
 				PRODUCT_MODULE_NAME = CodexUsageCore;
 				SDKROOT = iphoneos;
@@ -445,12 +491,12 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Tests";
 				PRODUCT_MODULE_NAME = CodexUsageTests;
 				SDKROOT = iphoneos;
@@ -475,7 +521,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
@@ -485,7 +531,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER)";
 				PRODUCT_MODULE_NAME = CodexUsageCore;
 				SDKROOT = iphoneos;
@@ -507,12 +553,12 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Tests";
 				PRODUCT_MODULE_NAME = CodexUsageTests;
 				SDKROOT = iphoneos;
@@ -536,7 +582,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;
@@ -544,7 +590,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Widget";
 				PRODUCT_MODULE_NAME = CodexUsageWidget;
 				SDKROOT = iphoneos;
@@ -592,7 +638,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -610,7 +656,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -632,7 +678,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;
@@ -640,7 +686,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Widget";
 				PRODUCT_MODULE_NAME = CodexUsageWidget;
 				SDKROOT = iphoneos;
@@ -689,7 +735,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -701,7 +747,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

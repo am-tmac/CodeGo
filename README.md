@@ -4,6 +4,14 @@
 
 独立 SwiftUI iOS 17+ 自用 App：iPhone 自行设备代码 OAuth 登录、直接读取 Codex 额度，在共享签名获授权时 WidgetKit 自行请求更新。没有 Mac 后端、CLIProxyAPI、CLI、Cookie 导入或第三方运行时依赖。没有读取/复制电脑已有的 OAuth 凭据。
 
+## 4.5 / build 42：重置额度、OpenCode Go、Command Code
+
+- Codex 增加独立重置额度明细请求：按可用状态和到期时间筛选，显示张数、最早过期时间和累计获得；请求失败仍显示原用量接口的张数，不影响主额度刷新。中号组件增加紧凑张数行。
+- OpenCode Go：仅 API Key，读取 5 小时 / 每周 / 每月百分比与重置时间。套餐金额只作说明，不用于计算；Key 从 https://opencode.ai/auth 获取。
+- Command Code：仅 API Key，读取窗口用量、本月剩余额度和加购额度。月度分母优先使用接口 grant；缺失时仅使用已知 planId 表并标注「按套餐 X 计」，未知套餐不推算百分比。Key 从 https://commandcode.ai/settings/keys 获取。
+- 两项服务沿用 DeepSeek 的本机钥匙串、替换/清除、快照缓存、卡片排序、独立刷新/移除和组件授权/退避。接口缺失字段显示「—」。新图标由用户提供的 CodexBar MIT SVG 转为模板 PNG。
+- 构建：`python3 Scripts/build42_release.py` → `python3 Scripts/package_widget_build42.py`，产物写入 `Dist/`。实测、红灯日志与边界见 `VERIFICATION-build42.md`；组件字节基线因新增显示和刷新路由刻意更新。
+
 ## 4.1 / build 38：移除用量页顶部说明行
 
 - 用量页顶部「只读用量由电脑上的 tokens CLI 上报…」整段说明已移除，账号信息直接作为页面开头；其余区块、统计口径、状态页、设置页与小组件均未改动。
@@ -53,7 +61,8 @@
 
 - 源代码使用 [MIT License](LICENSE)。
 - OpenAI、ChatGPT、Codex、Claude、Anthropic、Google、Antigravity、DeepSeek 等名称和商标归各自权利人所有。
-- App 内的服务商 logo（`App/Assets.xcassets/Logo*`）来自 [@lobehub/icons](https://github.com/lobehub/icons)（MIT），仅用于标识对应服务；MIT 许可不包含商标授权，本项目与上述公司无关联、未获其认可。如需商用或分发，请自行确认商标使用规范，或替换为自己的图标。
+- OpenCode Go / Command Code 的 logo 来自用户提供的 CodexBar（MIT）SVG，使用系统工具转换为透明模板 PNG；来源项目：https://github.com/steipete/CodexBar 。
+- 其余 App 内的服务商 logo（`App/Assets.xcassets/Logo*`）来自 [@lobehub/icons](https://github.com/lobehub/icons)（MIT），仅用于标识对应服务；MIT 许可不包含商标授权，本项目与上述公司无关联、未获其认可。如需商用或分发，请自行确认商标使用规范，或替换为自己的图标。
 - 仓库不分发来源不明的设计参考图。
 - 所有账号接口都有变更、限流或禁止第三方客户端的风险；使用者应自行确认服务条款和授权范围。
 

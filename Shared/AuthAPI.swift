@@ -191,14 +191,25 @@ public struct AuthAPI: Sendable {
         return try Credentials(response: JSONDecoder().decode(TokenResponse.self, from: data), previous: old)
     }
     /// Quota windows for the account. Same call shape the widget uses.
-    public func usage(_ credentials: Credentials) async throws -> UsageResponse {
-        var request = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/usage")!)
+    private func usageRequest(_ credentials: Credentials, endpoint: String) async throws -> Data {
+        var request = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/" + endpoint)!)
         request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("CodexUsage-iOS/1.0", forHTTPHeaderField: "User-Agent")
         if let account = credentials.accountID { request.setValue(account, forHTTPHeaderField: "ChatGPT-Account-Id") }
         let (data, status) = try await transport.send(request)
         guard status == 200 else { throw ServiceError.http(status) }
-        return try JSONDecoder().decode(UsageResponse.self, from: data)
+        return data
+    }
+    public func usage(_ credentials: Credentials) async throws -> UsageResponse {
+        try JSONDecoder().decode(UsageResponse.self, from: await usageRequest(credentials, endpoint: "usage"))
+    }
+    public func usageWithResetCredits(_ credentials: Credentials) async throws -> UsageResponse {
+        var value = try await usage(credentials)
+        if let data = try? await usageRequest(credentials, endpoint: "rate-limit-reset-credits") {
+            value.resetCreditDetails = try? CodexResetCredits.parse(data)
+        }
+        try Task.checkCancellation()
+        return value
     }
 }

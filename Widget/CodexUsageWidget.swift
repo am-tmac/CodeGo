@@ -30,6 +30,8 @@ struct DashboardColumn {
     let title: String
     let usage: UsageSnapshot?
     let balance: DeepSeekSnapshot?
+    var openCodeGo: OpenCodeGoSnapshot? = nil
+    var commandCode: CommandCodeSnapshot? = nil
     let antigravity: AntigravitySnapshot?
     let claude: ClaudeSnapshot?
     let tokensci: TokensCISnapshot?
@@ -39,6 +41,8 @@ struct DashboardColumn {
     var needsAppRefresh = false
     var updatedAt: Date? {
         switch provider {
+        case "opencodego": return openCodeGo?.updatedAt
+        case "commandcode": return commandCode?.updatedAt
         case "deepseek": return balance?.updatedAt
         case "antigravity": return antigravity?.updatedAt
         case "claude": return claude?.updatedAt
@@ -55,6 +59,8 @@ struct DashboardColumn {
         return Self(id: id, provider: provider, title: row?.title ?? "未选择 / 账号已移除",
                     usage: provider == "codex" ? id.flatMap { SharedStorage.snapshot(account: $0) } : nil,
                     balance: provider == "deepseek" ? id.flatMap { DeepSeekStore.snapshot($0) } : nil,
+                    openCodeGo: provider == "opencodego" ? id.flatMap { OpenCodeGoStore.snapshot($0) } : nil,
+                    commandCode: provider == "commandcode" ? id.flatMap { CommandCodeStore.snapshot($0) } : nil,
                     antigravity: provider == "antigravity" && id != nil ? AntigravityStore.snapshot() : nil,
                     claude: provider == "claude" ? ClaudeStore.snapshot() : nil,
                     tokensci: provider == "tokensci" ? id.flatMap { TokensCIStore.snapshot($0) } : nil,
@@ -119,6 +125,11 @@ struct DashboardWidgetView: View {
                 DeepSeekCompactView(snapshot: value.balance, label: value.title, failed: value.failed,
                                     cacheOnly: !value.canRefresh, palette: palette)
             }
+        } else if value.provider == "opencodego" || value.provider == "commandcode" {
+            APIUsageCompactView(title: value.provider == "opencodego" ? "OpenCode Go" : "Command Code",
+                snapshot: value.openCodeGo.map { ProviderCardData($0) } ?? value.commandCode.map { ProviderCardData($0) },
+                command: value.provider == "commandcode", failed: value.failed, cacheOnly: !value.canRefresh,
+                palette: palette, display: entry.display)
         } else if value.provider == "antigravity" {
             AntigravityWidgetView(snapshot: value.antigravity, palette: palette, display: entry.display)
         } else if value.provider == "claude" {
@@ -127,7 +138,7 @@ struct DashboardWidgetView: View {
         } else if value.provider == "tokensci" {
             TokensCICompactView(snapshot: value.tokensci, palette: palette)
         } else {
-            CompactUsageView(snapshot: value.usage, failed: value.failed, refreshing: value.refreshing,
+            CompactUsageView(showResetCredits: family != .systemSmall, snapshot: value.usage, failed: value.failed, refreshing: value.refreshing,
                              sharingUnavailable: !SharedStorage.cacheSharingAvailable, cacheOnly: !value.canRefresh,
                              palette: palette, display: entry.display)
         }
@@ -200,7 +211,7 @@ struct CodexUsageWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: DashboardConfiguration.self, provider: UsageProvider()) { entry in
             DashboardWidgetRoot(entry: entry)
-        }.configurationDisplayName("Codex / DeepSeek")
+        }.configurationDisplayName("订阅额度与 API 余额")
             .description("长按编辑组件，独立选择服务与账号；中号右上角一个刷新按钮同时刷新两栏。")
             .supportedFamilies([.systemSmall, .systemMedium])
             // The stacked DeepSeek card is a full-bleed card stack: it draws its own 8pt/16pt
