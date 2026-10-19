@@ -156,7 +156,7 @@ class WidgetRefreshContract(unittest.TestCase):
         # sessionKey/key path are DELETED, not hidden — no paste field, no cookie store, no
         # key-based fetch, no allowlist of challenge hosts. The provider is a real sign-in.
         for name in ['App/ClaudePanel.swift', 'Shared/Claude.swift', 'App/CodeGoApp.swift',
-                     'Widget/CodeGoWidget.swift', 'Scripts/package_widget_build31.py']:
+                     'Widget/CodeGoWidget.swift']:
             text = (ROOT / name).read_text()
             self.assertNotIn('sessionKey', text)
             self.assertNotIn('saveCookie', text)

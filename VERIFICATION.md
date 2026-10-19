@@ -2,7 +2,7 @@
 
 ## 交付物
 - `CodeGo-4.7-build44-unsigned.ipa`（未签名，需自行重签）
-- SHA-256: `0c926a637cf3c2bfe62d59f31462ee53329a934e3ea11b15d1956b9e303f8485`
+- SHA-256: `5b9bab6e711de33055ce2608eb2db0b66e6e973a8803234bdc51c0c4034c2d9c（由 `Scripts/release.py` 重新打包）`
 
 ## 改动
 - 新图标 Gauge G（墨黑 `#111214` / 白 / 青柠 `#C8F03C`），浅色、深色、着色三种外观；源 SVG 在 `Design/logo/final/`。
@@ -19,3 +19,5 @@
 | 主图标透明通道 | 无（RGB） |
 
 未做：模拟器 `xcodebuild test`（本版只改资源与版本号）；真机三种外观的视觉确认。
+
+发布命令（取代按版本号命名的旧脚本）：`python3 Scripts/release.py`。
