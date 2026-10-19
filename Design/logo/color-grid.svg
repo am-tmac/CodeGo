@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1140 830" width="2280" height="1660"><rect width="1140" height="830" fill="#E9E9EC"/>
+<text x="280.0" y="50" font-family="PingFang SC,Helvetica" font-size="18" text-anchor="middle" fill="#222">深海蓝</text>
+<text x="520.0" y="50" font-family="PingFang SC,Helvetica" font-size="18" text-anchor="middle" fill="#222">墨黑青柠</text>
+<text x="760.0" y="50" font-family="PingFang SC,Helvetica" font-size="18" text-anchor="middle" fill="#222">纸白橙</text>
+<text x="1000.0" y="50" font-family="PingFang SC,Helvetica" font-size="18" text-anchor="middle" fill="#222">紫罗兰</text>
+<text x="20" y="186.0" font-family="Helvetica" font-size="17" fill="#222">A Forward C</text>
+<rect x="180" y="80" width="200" height="200" rx="45" fill="#0B1424"/>
+<g transform="translate(208.0,108.0) scale(0.5625)"><path fill="#FFFFFF" d="M164.94 80.72 L189.57 49.20 A100 100 0 1 0 189.57 206.80 L164.94 175.28 A60 60 0 1 1 164.94 80.72 Z"/><path fill="#3D8BFF" stroke="#3D8BFF" d="M177 102 L222.03 128 L177 154 Z"  stroke-width="12" stroke-linejoin="round"/></g>
+<rect x="420" y="80" width="200" height="200" rx="45" fill="#111214"/>
+<g transform="translate(448.0,108.0) scale(0.5625)"><path fill="#FFFFFF" d="M164.94 80.72 L189.57 49.20 A100 100 0 1 0 189.57 206.80 L164.94 175.28 A60 60 0 1 1 164.94 80.72 Z"/><path fill="#C8F03C" stroke="#C8F03C" d="M177 102 L222.03 128 L177 154 Z"  stroke-width="12" stroke-linejoin="round"/></g>
+<rect x="660" y="80" width="200" height="200" rx="45" fill="#F4F1EA"/>
+<g transform="translate(688.0,108.0) scale(0.5625)"><path fill="#17181B" d="M164.94 80.72 L189.57 49.20 A100 100 0 1 0 189.57 206.80 L164.94 175.28 A60 60 0 1 1 164.94 80.72 Z"/><path fill="#FF5A1F" stroke="#FF5A1F" d="M177 102 L222.03 128 L177 154 Z"  stroke-width="12" stroke-linejoin="round"/></g>
+<rect x="900" y="80" width="200" height="200" rx="45" fill="#1A1033"/>
+<g transform="translate(928.0,108.0) scale(0.5625)"><path fill="#FFFFFF" d="M164.94 80.72 L189.57 49.20 A100 100 0 1 0 189.57 206.80 L164.94 175.28 A60 60 0 1 1 164.94 80.72 Z"/><path fill="#8B7CFF" stroke="#8B7CFF" d="M177 102 L222.03 128 L177 154 Z"  stroke-width="12" stroke-linejoin="round"/></g>
+<text x="20" y="426.0" font-family="Helvetica" font-size="17" fill="#222">B Twin Meters</text>
+<rect x="180" y="320" width="200" height="200" rx="45" fill="#0B1424"/>
+<g transform="translate(208.0,348.0) scale(0.5625)"><rect x="32" y="64" width="192" height="56" rx="28" fill="none" stroke="#FFFFFF" stroke-width="14"/><path fill="#3D8BFF" d="M60 80 H179 V104 H60 A12 12 0 0 1 60 80 Z"/><rect x="32" y="144" width="192" height="56" rx="28" fill="none" stroke="#FFFFFF" stroke-width="14"/><path fill="#3D8BFF" d="M60 160 H125 V184 H60 A12 12 0 0 1 60 160 Z"/></g>
+<rect x="420" y="320" width="200" height="200" rx="45" fill="#111214"/>
+<g transform="translate(448.0,348.0) scale(0.5625)"><rect x="32" y="64" width="192" height="56" rx="28" fill="none" stroke="#FFFFFF" stroke-width="14"/><path fill="#C8F03C" d="M60 80 H179 V104 H60 A12 12 0 0 1 60 80 Z"/><rect x="32" y="144" width="192" height="56" rx="28" fill="none" stroke="#FFFFFF" stroke-width="14"/><path fill="#C8F03C" d="M60 160 H125 V184 H60 A12 12 0 0 1 60 160 Z"/></g>
+<rect x="660" y="320" width="200" height="200" rx="45" fill="#F4F1EA"/>
+<g transform="translate(688.0,348.0) scale(0.5625)"><rect x="32" y="64" width="192" height="56" rx="28" fill="none" stroke="#17181B" stroke-width="14"/><path fill="#FF5A1F" d="M60 80 H179 V104 H60 A12 12 0 0 1 60 80 Z"/><rect x="32" y="144" width="192" height="56" rx="28" fill="none" stroke="#17181B" stroke-width="14"/><path fill="#FF5A1F" d="M60 160 H125 V184 H60 A12 12 0 0 1 60 160 Z"/></g>
+<rect x="900" y="320" width="200" height="200" rx="45" fill="#1A1033"/>
+<g transform="translate(928.0,348.0) scale(0.5625)"><rect x="32" y="64" width="192" height="56" rx="28" fill="none" stroke="#FFFFFF" stroke-width="14"/><path fill="#8B7CFF" d="M60 80 H179 V104 H60 A12 12 0 0 1 60 80 Z"/><rect x="32" y="144" width="192" height="56" rx="28" fill="none" stroke="#FFFFFF" stroke-width="14"/><path fill="#8B7CFF" d="M60 160 H125 V184 H60 A12 12 0 0 1 60 160 Z"/></g>
+<text x="20" y="666.0" font-family="Helvetica" font-size="17" fill="#222">C Gauge G</text>
+<rect x="180" y="560" width="200" height="200" rx="45" fill="#0B1424"/>
+<g transform="translate(208.0,588.0) scale(0.5625)"><path fill="#FFFFFF" d="M173.25 82.75 L198.71 57.29 A100 100 0 1 0 224.59 153.88 L189.82 144.56 A64 64 0 1 1 173.25 82.75 Z"/><path fill="#3D8BFF" d="M131.62 141.52 L198.58 113.23 L196.51 105.50 L124.38 114.48 Z" stroke="#3D8BFF" stroke-width="6" stroke-linejoin="round"/><circle fill="#3D8BFF" cx="128" cy="128" r="22"/></g>
+<rect x="420" y="560" width="200" height="200" rx="45" fill="#111214"/>
+<g transform="translate(448.0,588.0) scale(0.5625)"><path fill="#FFFFFF" d="M173.25 82.75 L198.71 57.29 A100 100 0 1 0 224.59 153.88 L189.82 144.56 A64 64 0 1 1 173.25 82.75 Z"/><path fill="#C8F03C" d="M131.62 141.52 L198.58 113.23 L196.51 105.50 L124.38 114.48 Z" stroke="#C8F03C" stroke-width="6" stroke-linejoin="round"/><circle fill="#C8F03C" cx="128" cy="128" r="22"/></g>
+<rect x="660" y="560" width="200" height="200" rx="45" fill="#F4F1EA"/>
+<g transform="translate(688.0,588.0) scale(0.5625)"><path fill="#17181B" d="M173.25 82.75 L198.71 57.29 A100 100 0 1 0 224.59 153.88 L189.82 144.56 A64 64 0 1 1 173.25 82.75 Z"/><path fill="#FF5A1F" d="M131.62 141.52 L198.58 113.23 L196.51 105.50 L124.38 114.48 Z" stroke="#FF5A1F" stroke-width="6" stroke-linejoin="round"/><circle fill="#FF5A1F" cx="128" cy="128" r="22"/></g>
+<rect x="900" y="560" width="200" height="200" rx="45" fill="#1A1033"/>
+<g transform="translate(928.0,588.0) scale(0.5625)"><path fill="#FFFFFF" d="M173.25 82.75 L198.71 57.29 A100 100 0 1 0 224.59 153.88 L189.82 144.56 A64 64 0 1 1 173.25 82.75 Z"/><path fill="#8B7CFF" d="M131.62 141.52 L198.58 113.23 L196.51 105.50 L124.38 114.48 Z" stroke="#8B7CFF" stroke-width="6" stroke-linejoin="round"/><circle fill="#8B7CFF" cx="128" cy="128" r="22"/></g>
+</svg>

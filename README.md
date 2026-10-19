@@ -4,6 +4,12 @@
 
 CodeGo（原名 CodexUsage）是独立 SwiftUI iOS 17+ 自用 App：iPhone 自行设备代码 OAuth 登录、直接读取 Codex 额度，在共享签名获授权时 WidgetKit 自行请求更新。没有 Mac 后端、CLIProxyAPI、CLI、Cookie 导入或第三方运行时依赖。没有读取/复制电脑已有的 OAuth 凭据。
 
+## 4.7 / build 44：新 App 图标
+
+- 新图标「Gauge G」：白色 G 的横杠是一根青柠色仪表指针（CodeGo 的 G + 额度表），墨黑底 `#111214`、青柠 `#C8F03C`。
+- 提供 iOS 18 浅色 / 深色 / 着色三种外观；源 SVG 与渲染图在 `Design/logo/final/`，概念稿在 `Design/logo/`。旧的 `Scripts/draw_icon.swift` 已删除。
+- 构建：`python3 Scripts/build44_release.py && python3 Scripts/package_widget_build44.py`。
+
 ## 4.6 / build 43：CodeGo、组件重置积分
 
 - App、扩展显示名称、工程、target、scheme 和产物改为 CodeGo；原 Bundle ID、App Group、Keychain、缓存路径与 WidgetKit kind 保留，已安装组件仍使用原标识。
@@ -131,7 +137,7 @@ xcodebuild -project CodeGo.xcodeproj -scheme CodeGo \
 
 - `App/` SwiftUI App 和绘制图标；`Widget/` WidgetKit；`Shared/` 协议/存储/视图；`Tests/` XCTest。
 - `Scripts/generate_project.rb` 使用项目内 `.tools/gems` 的 xcodeproj 可重建工程（**会覆盖你在 Xcode 手改的签名设置，修改脚本再生成**）。
-- `Scripts/configure.py` 生成 plist/entitlements/asset metadata；`Scripts/draw_icon.swift` 使用 AppKit 矢量路径绘制 1024px 图标。
+- `Scripts/configure.py` 生成 plist/entitlements/asset metadata；App 图标源文件在 `Design/logo/final/`（SVG：浅色 / 深色 / 着色三种外观），1024px PNG 由其渲染。
 - 没有全局 gem 安装；运行 App 不依赖这些生成工具。
 
 ## 兼容重签版（compatible-unsigned）

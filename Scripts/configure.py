@@ -15,5 +15,5 @@ assets.mkdir(parents=True, exist_ok=True)
 (assets / 'Contents.json').write_text(json.dumps({'info':{'author':'xcode','version':1}}))
 icon = assets / 'AppIcon.appiconset'
 icon.mkdir(exist_ok=True)
-(icon / 'Contents.json').write_text(json.dumps({'images':[{'filename':'AppIcon.png','idiom':'universal','platform':'ios','size':'1024x1024'}], 'info':{'author':'xcode','version':1}}))
+(icon / 'Contents.json').write_text(json.dumps({'images': [{'filename': 'AppIcon.png', 'idiom': 'universal', 'platform': 'ios', 'size': '1024x1024'}, {'appearances': [{'appearance': 'luminosity', 'value': 'dark'}], 'filename': 'AppIcon-Dark.png', 'idiom': 'universal', 'platform': 'ios', 'size': '1024x1024'}, {'appearances': [{'appearance': 'luminosity', 'value': 'tinted'}], 'filename': 'AppIcon-Tinted.png', 'idiom': 'universal', 'platform': 'ios', 'size': '1024x1024'}], 'info': {'author': 'xcode', 'version': 1}}))
 

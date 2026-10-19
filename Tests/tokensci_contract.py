@@ -26,6 +26,6 @@ class TokensCIContracts(unittest.TestCase):
     def test_versions(self):
         project = (R/'CodeGo.xcodeproj/project.pbxproj').read_text()
         # Project + three targets (Debug/Release), all explicitly aligned.
-        self.assertEqual(project.count('MARKETING_VERSION = 4.6;'), 8)
-        self.assertEqual(project.count('CURRENT_PROJECT_VERSION = 43;'), 8)
+        self.assertEqual(project.count('MARKETING_VERSION = 4.7;'), 8)
+        self.assertEqual(project.count('CURRENT_PROJECT_VERSION = 44;'), 8)
 if __name__ == '__main__': unittest.main()

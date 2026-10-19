@@ -13,7 +13,7 @@ class Build43Contract(unittest.TestCase):
                     self.assertNotIn(forbidden, source, str(path))
     def test_name_and_version(self):
         project = (ROOT/'CodeGo.xcodeproj/project.pbxproj').read_text()
-        self.assertIn('MARKETING_VERSION = 4.6;', project)
-        self.assertIn('CURRENT_PROJECT_VERSION = 43;', project)
+        self.assertIn('MARKETING_VERSION = 4.7;', project)
+        self.assertIn('CURRENT_PROJECT_VERSION = 44;', project)
         self.assertFalse((ROOT/'CodexUsage.xcodeproj').exists())
 if __name__ == '__main__': unittest.main()
