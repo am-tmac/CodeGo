@@ -1,6 +1,6 @@
 import XCTest
 import Security
-@testable import CodexUsageCore
+@testable import CodeGo
 #if os(iOS)
 actor HeldUsageTransport: HTTPTransport {
     var count = 0
@@ -263,7 +263,7 @@ final class StorageTests: XCTestCase {
 
     func testAppCardRefreshWiringAndFailurePresentation() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        let app = try String(contentsOf: root.appendingPathComponent("App/CodexUsageApp.swift"))
+        let app = try String(contentsOf: root.appendingPathComponent("App/CodeGoApp.swift"))
         let claude = try String(contentsOf: root.appendingPathComponent("App/ClaudePanel.swift"))
         XCTAssertTrue(app.contains("model.refresh(target: .antigravity)"))
         XCTAssertTrue(app.contains("model.refresh(target: .claude)"))
@@ -305,7 +305,7 @@ final class StorageTests: XCTestCase {
 
     func testAppTestHostDoesNotInitializeAccountStorage() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        let app = try String(contentsOf: root.appendingPathComponent("App/CodexUsageApp.swift"))
+        let app = try String(contentsOf: root.appendingPathComponent("App/CodeGoApp.swift"))
         let entry = app.components(separatedBy: "struct CodexUsageApp: App").last!
         XCTAssertTrue(entry.contains("XCTestConfigurationFilePath"))
         XCTAssertTrue(entry.contains("UsageModel(loadStoredAccounts: !"))
@@ -702,67 +702,6 @@ final class StorageTests: XCTestCase {
         XCTAssertEqual(try SharedStorage.accountIDs().count, 2)
     }
     // MARK: - Display identity, masking switch and shared-snapshot privacy
-    func testLabelPolicyMasksInSharedSnapshotUnlessOptedIn() {
-        let identity = "alex@example.com"
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: identity, plan: "plus", showFull: false), "ale***@example.com · Plus")
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: identity, plan: "plus", showFull: true), "alex@example.com · Plus")
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: identity, plan: nil, showFull: false), "ale***@example.com")
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: nil, plan: nil, showFull: false), AccountLabel.unknownIdentity)
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: nil, plan: "pro", showFull: true), "未命名账号 · Pro")
-    }
-    func testMaskingSwitchDefaultsOffAndSharedSnapshotOmitsFullIdentity() throws {
-        let identity = "alex@example.com"
-        let account = "unit-label-policy"
-        defer { try? SharedStorage.clearSnapshot(account: account) }
-        // Default must be masked, even before any switch file has ever been written.
-        XCTAssertFalse(SharedStorage.showFullAccountInWidget)
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: identity, plan: "plus"), "ale***@example.com · Plus")
-        let masked = UsageSnapshot(usage: UsageResponse(planType: "plus", rateLimit: nil, credits: nil, rateLimitResetCredits: nil), updatedAt: Date(timeIntervalSince1970: 1),
-                                   accountLabel: SharedStorage.snapshotLabel(email: identity, plan: "plus", showFull: false))
-        let url = try SharedStorage.snapshotURL(account)
-        try JSONEncoder().encode(masked).write(to: url, options: .atomic)
-        let written = String(decoding: try Data(contentsOf: url), as: UTF8.self)
-        XCTAssertTrue(written.contains("ale***@example.com · Plus"))
-        XCTAssertFalse(written.contains(identity))
-        XCTAssertFalse(written.contains("alex"))
-        // Opt-in path requires a real shared container; without one it must stay masked.
-        do {
-            try SharedStorage.setShowFullAccountInWidget(true)
-            XCTAssertTrue(SharedStorage.showFullAccountInWidget)
-            let full = UsageSnapshot(usage: UsageResponse(planType: "plus", rateLimit: nil, credits: nil, rateLimitResetCredits: nil), updatedAt: Date(timeIntervalSince1970: 1),
-                                     accountLabel: SharedStorage.snapshotLabel(email: identity, plan: "plus"))
-            try JSONEncoder().encode(full).write(to: url, options: .atomic)
-            XCTAssertTrue(String(decoding: try Data(contentsOf: url), as: UTF8.self).contains(identity))
-        } catch {
-            XCTAssertFalse(SharedStorage.showFullAccountInWidget)
-        }
-        try? SharedStorage.setShowFullAccountInWidget(false)
-        XCTAssertFalse(SharedStorage.showFullAccountInWidget)
-    }
-    func testLegacySnapshotWithoutLabelStillDecodes() throws {
-        let legacy = Data(#"{"usage":{"rate_limit":null},"updatedAt":0}"#.utf8)
-        let decoded = try JSONDecoder().decode(UsageSnapshot.self, from: legacy)
-        XCTAssertNil(decoded.accountLabel)
-        XCTAssertTrue(String(decoding: try JSONEncoder().encode(decoded), as: UTF8.self).contains("\"updatedAt\""))
-    }
-    func testMaskingSwitchRoundTripsAndOnlyTheAppMayChangeIt() throws {
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: directory) }
-        let url = directory.appendingPathComponent("widget-identity-display.json")
-        // Absent file (and no container at all) -> masked default.
-        XCTAssertFalse(SharedStorage.showFullAccountInWidget(at: url))
-        XCTAssertFalse(SharedStorage.showFullAccountInWidget(at: nil))
-        try SharedStorage.setShowFullAccountInWidget(true, at: url, isWidget: false)
-        XCTAssertTrue(SharedStorage.showFullAccountInWidget(at: url))
-        // The extension must never be able to widen exposure.
-        XCTAssertThrowsError(try SharedStorage.setShowFullAccountInWidget(true, at: url, isWidget: true))
-        XCTAssertThrowsError(try SharedStorage.setShowFullAccountInWidget(true, at: nil, isWidget: false))
-        // Turning it off deletes the file so the masked default applies again.
-        try SharedStorage.setShowFullAccountInWidget(false, at: url, isWidget: false)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
-        XCTAssertFalse(SharedStorage.showFullAccountInWidget(at: url))
-    }
     func testSharedContainerLockRejectsConcurrentWriter() throws {
         let lease = try CredentialLease()
         defer { withExtendedLifetime(lease) {} }
@@ -845,49 +784,14 @@ final class StorageTests: XCTestCase {
         XCTAssertEqual(try SharedStorage.credentials(account: withClaim)?.email, "toplevel@example.com")
         // The sibling with no usable claim keeps the neutral placeholder, not the other account's name.
         XCTAssertNil(try SharedStorage.credentials(account: withoutClaim)?.email)
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: try SharedStorage.credentials(account: withoutClaim)?.email, plan: nil), AccountLabel.unknownIdentity)
     }
-    func testRecoveredIdentityFeedsAppAndWidgetLabelPaths() throws {
+    func testRecoveredIdentityFeedsAppLabelPath() throws {
         let account = "unit-legacy-label"
         defer { removeLegacyRecord(account) }
         try writeLegacyRecord(accessToken: try jwt(["exp": 4_000_000_000, "https://api.openai.com/profile": ["email": "alex@example.com"]]), account: account)
         // App label path: UsageModel.label(for:) reads accountEmail(id) and shows it unmasked.
         let appIdentity = try XCTUnwrap(SharedStorage.accountEmail(account))
         XCTAssertEqual(AccountLabel.text(identity: appIdentity, plan: AccountLabel.plan("plus"), masked: false), "alex@example.com · Plus")
-        // Widget label path: the snapshot label built from the same credentials is masked by default.
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: appIdentity, plan: "plus"), "ale***@example.com · Plus")
-    }
-    func testExistingSnapshotLabelIsRefreshedWhenIdentityIsRecovered() throws {
-        let account = "unit-legacy-snapshot"
-        defer { removeLegacyRecord(account) }
-        try writeLegacyRecord(accessToken: try jwt(["exp": 4_000_000_000, "https://api.openai.com/profile": ["email": "alex@example.com"]]), account: account)
-        // An old snapshot already written with the placeholder label.
-        let url = try SharedStorage.snapshotURL(account)
-        let stale = UsageSnapshot(usage: UsageResponse(planType: "plus", rateLimit: nil, credits: nil, rateLimitResetCredits: nil), updatedAt: Date(timeIntervalSince1970: 1), accountLabel: AccountLabel.unknownIdentity)
-        try JSONEncoder().encode(stale).write(to: url, options: .atomic)
-        XCTAssertTrue(String(decoding: try Data(contentsOf: url), as: UTF8.self).contains(AccountLabel.unknownIdentity))
-        // Loading the credential recovers and persists the identity, then re-labels the stored snapshot.
-        _ = try SharedStorage.credentials(account: account)
-        let written = String(decoding: try Data(contentsOf: url), as: UTF8.self)
-        XCTAssertTrue(written.contains("ale***@example.com · Plus"), written)
-        XCTAssertFalse(written.contains(AccountLabel.unknownIdentity), written)
-        XCTAssertFalse(written.contains("alex@example.com"), written)
-        XCTAssertFalse(written.contains("alex"), written)
-    }
-    func testSnapshotStaysMaskedWithRecoveredIdentityUnderDefaultSettings() throws {
-        let account = "unit-legacy-masking"
-        defer { removeLegacyRecord(account) }
-        try writeLegacyRecord(accessToken: try jwt(["exp": 4_000_000_000, "https://api.openai.com/profile": ["email": "alex@example.com"]]), account: account)
-        XCTAssertFalse(SharedStorage.showFullAccountInWidget)
-        let identity = try XCTUnwrap(SharedStorage.accountEmail(account))
-        let snapshot = UsageSnapshot(usage: UsageResponse(planType: "plus", rateLimit: nil, credits: nil, rateLimitResetCredits: nil), updatedAt: Date(timeIntervalSince1970: 1),
-                                     accountLabel: SharedStorage.snapshotLabel(email: identity, plan: "plus"))
-        let url = try SharedStorage.snapshotURL(account)
-        try JSONEncoder().encode(snapshot).write(to: url, options: .atomic)
-        let written = String(decoding: try Data(contentsOf: url), as: UTF8.self)
-        XCTAssertTrue(written.contains("ale***@example.com · Plus"))
-        XCTAssertFalse(written.contains("alex@example.com"))
-        XCTAssertFalse(written.contains("alex"))
     }
     func testPlaceholderWhenClaimsCarryNoIdentityOrTokenIsMalformed() throws {
         let account = "unit-legacy-placeholder"
@@ -896,17 +800,14 @@ final class StorageTests: XCTestCase {
         try writeLegacyRecord(accessToken: try jwt(["exp": 4_000_000_000]), account: account)
         let noClaim = try XCTUnwrap(try SharedStorage.credentials(account: account))
         XCTAssertNil(noClaim.email)
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: noClaim.email, plan: nil), AccountLabel.unknownIdentity)
         XCTAssertNil((try XCTUnwrap(try storedRecord(account)))["email"])
         // A malformed / non-JWT access token must degrade to the placeholder, never crash.
         try writeLegacyRecord(accessToken: "unit-not-a-jwt", account: account)
         let malformed = try XCTUnwrap(try SharedStorage.credentials(account: account))
         XCTAssertNil(malformed.email)
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: malformed.email, plan: "plus"), "未命名账号 · Plus")
         XCTAssertNil((try XCTUnwrap(try storedRecord(account)))["email"])
         // A blank stored identity is treated as missing; with no claim it still shows the placeholder.
         try writeLegacyRecord(accessToken: "unit-not-a-jwt", account: account, storedEmail: "   ")
-        XCTAssertEqual(SharedStorage.snapshotLabel(email: try SharedStorage.credentials(account: account)?.email, plan: nil), AccountLabel.unknownIdentity)
         XCTAssertEqual((try XCTUnwrap(try storedRecord(account)))["email"] as? String, "   ")
     }
     func testStoredIdentityIsNeverReplacedByTheTokenClaim() throws {

@@ -5,7 +5,7 @@ R = Path(__file__).resolve().parents[1]
 
 class UsageConnectionContracts(unittest.TestCase):
     def test_usage_plus_routes_directly_before_refresh(self):
-        app = (R/'App/CodexUsageApp.swift').read_text()
+        app = (R/'App/CodeGoApp.swift').read_text()
         header = app.split('var navigationBar: some View {', 1)[1].split('// MARK: - 状态', 1)[0]
         self.assertIn('if tab == .usage {', header)
         self.assertIn('Button { connect = .tokensCI }', header)

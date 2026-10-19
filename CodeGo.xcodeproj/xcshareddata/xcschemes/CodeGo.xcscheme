@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "8A8C98AA138A30732B3400D0"
-               BuildableName = "CodexUsage.app"
-               BlueprintName = "CodexUsage"
-               ReferencedContainer = "container:CodexUsage.xcodeproj">
+               BuildableName = "CodeGo.app"
+               BlueprintName = "CodeGo"
+               ReferencedContainer = "container:CodeGo.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -31,9 +31,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8A8C98AA138A30732B3400D0"
-            BuildableName = "CodexUsage.app"
-            BlueprintName = "CodexUsage"
-            ReferencedContainer = "container:CodexUsage.xcodeproj">
+            BuildableName = "CodeGo.app"
+            BlueprintName = "CodeGo"
+            ReferencedContainer = "container:CodeGo.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -42,9 +42,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1A5E1EFDB12451FD86C2B774"
-               BuildableName = "CodexUsageTests.xctest"
-               BlueprintName = "CodexUsageTests"
-               ReferencedContainer = "container:CodexUsage.xcodeproj">
+               BuildableName = "CodeGoTests.xctest"
+               BlueprintName = "CodeGoTests"
+               ReferencedContainer = "container:CodeGo.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -64,9 +64,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8A8C98AA138A30732B3400D0"
-            BuildableName = "CodexUsage.app"
-            BlueprintName = "CodexUsage"
-            ReferencedContainer = "container:CodexUsage.xcodeproj">
+            BuildableName = "CodeGo.app"
+            BlueprintName = "CodeGo"
+            ReferencedContainer = "container:CodeGo.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -81,9 +81,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8A8C98AA138A30732B3400D0"
-            BuildableName = "CodexUsage.app"
-            BlueprintName = "CodexUsage"
-            ReferencedContainer = "container:CodexUsage.xcodeproj">
+            BuildableName = "CodeGo.app"
+            BlueprintName = "CodeGo"
+            ReferencedContainer = "container:CodeGo.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

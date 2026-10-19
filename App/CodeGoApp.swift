@@ -79,6 +79,7 @@ struct AppRefreshFetchers {
     private let fetchers: AppRefreshFetchers
     private var refreshFailureDates: [AppRefreshTarget: Date] = [:]
     init(loadStoredAccounts: Bool = true, fetchers: AppRefreshFetchers = AppRefreshFetchers()) {
+        SharedStorage.removeLegacyWidgetIdentityPreference()
         self.fetchers = fetchers
         guard loadStoredAccounts else { return }
         reloadAccounts()
@@ -562,7 +563,6 @@ struct ContentView: View {
     @State private var connect: ConnectEntry?
     @State private var confirmWidgetRisk = false
     @State private var widgetConsentEnabled = false
-    @State private var showFullInWidget = SharedStorage.showFullAccountInWidget
     @State private var theme = ThemePreference.load()
     @State private var usageDisplay = UsageDisplay.load()
     @StateObject private var cardOrderModel = CardOrderModel(keys: CardOrder.load())
@@ -611,12 +611,6 @@ struct ContentView: View {
         widgetConsentEnabled = SharedStorage.consent != nil
         WidgetCenter.shared.reloadAllTimelines()
         Task { await reloadAuth() }
-    }
-    func setFullInWidget(_ enabled: Bool) {
-        do { try SharedStorage.setShowFullAccountInWidget(enabled); SharedStorage.relabelSnapshots(); model.reloadAccounts() }
-        catch { model.message = error.localizedDescription }
-        showFullInWidget = SharedStorage.showFullAccountInWidget
-        WidgetCenter.shared.reloadAllTimelines()
     }
     /// Local slot text from build 14, kept verbatim: it says which on-device account this is.
     func slotValue(_ id: String) -> String { id == "phone-owned" ? "首个账号" : String(id.prefix(8)) }
@@ -801,7 +795,7 @@ struct ContentView: View {
     /// Centred App title (this project's own name) with the one meaningful trailing control.
     var navigationBar: some View {
         ZStack {
-            Text("Codex 用量").scaledFont(17, weight: .semibold, relativeTo: .headline).foregroundStyle(palette.primary)
+            Text("CodeGo").scaledFont(17, weight: .semibold, relativeTo: .headline).foregroundStyle(palette.primary)
             HStack {
                 Spacer()
                 if tab == .status && model.signedIn {
@@ -975,13 +969,6 @@ struct ContentView: View {
                 Text("百分比和用量条显示剩余还是已用；App 与小组件同步。剩余不足 20% 时仍会变红。").font(.footnote).foregroundStyle(palette.secondary)
             }
         }
-        AppCard(title: "隐私", caption: "邮箱遮蔽与共享容器", systemImage: "lock", palette: palette) {
-            VStack(alignment: .leading, spacing: 12) {
-                Toggle("在小组件中显示完整邮箱", isOn: Binding(get: { showFullInWidget }, set: { enabled in setFullInWidget(enabled) })).tint(palette.accent)
-                Text(showFullInWidget ? "已开启：完整邮箱（含套餐，如 alex@example.com · Plus）会写入与其他同组 App 共享的容器，购买证书下这些 App 可读取该显示字符串。登录令牌始终不写入共享容器。" : "默认关闭：小组件只显示遮蔽账号名（如 ale***@example.com · Plus），完整邮箱不会写入共享容器。App 内仍显示完整邮箱。开启即接受同组其他 App 可读取该字符串。")
-                    .font(.footnote).foregroundStyle(palette.secondary)
-            }
-        }
         AppCard(title: "共享诊断", caption: "握手、容器与组件状态", systemImage: "stethoscope", palette: palette) {
             VStack(alignment: .leading, spacing: 12) {
                 DisclosureGroup("共享诊断（不含令牌）") {
@@ -1124,7 +1111,7 @@ struct AccountCard: View {
                             if let unlimited = credits.unlimited { AppRow(label: "无限额度", value: unlimited ? "是" : "否", palette: palette) }
                         }
                         TimelineView(.periodic(from: .now, by: 60)) { context in
-                            AppRow(label: "重置额度", value: (snapshot?.usage.resetCreditDetails.map { $0.usable(now: context.date).count } ?? snapshot?.usage.rateLimitResetCredits?.availableCount).map { "\($0) 张" } ?? "—", palette: palette)
+                            AppRow(label: "重置积分", value: (snapshot?.usage.resetCreditDetails.map { $0.usable(now: context.date).count } ?? snapshot?.usage.rateLimitResetCredits?.availableCount).map { "\($0) 张" } ?? "—", palette: palette)
                         }
                         if let details = snapshot?.usage.resetCreditDetails {
                             TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -1236,7 +1223,7 @@ struct AntigravityCard: View {
 }
 
 @main
-struct CodexUsageApp: App {
+struct CodeGoApp: App {
     // XCTest hosts must not read real account stores, render storage-backed settings or auto-fetch.
     static let isTesting = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     @StateObject private var model = UsageModel(loadStoredAccounts: !isTesting)

@@ -1,5 +1,5 @@
 import XCTest
-@testable import CodexUsageCore
+@testable import CodeGo
 
 actor ScriptedTransport: HTTPTransport {
     var replies: [(String, Int)]

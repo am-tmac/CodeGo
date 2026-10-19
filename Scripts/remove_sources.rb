@@ -2,7 +2,7 @@
 require 'xcodeproj'
 root = File.expand_path('..', __dir__)
 Dir.chdir(root)
-p = Xcodeproj::Project.open('CodexUsage.xcodeproj')
+p = Xcodeproj::Project.open('CodeGo.xcodeproj')
 paths = ARGV
 abort('usage: ruby Scripts/remove_sources.rb <path> [path...]') if paths.empty?
 paths.each do |path|

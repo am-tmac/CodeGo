@@ -1,5 +1,5 @@
 import XCTest
-@testable import CodexUsageCore
+@testable import CodeGo
 
 // Failure inventory (written before implementation): unknown/expired credits; negative counts;
 // missing optional dates; supplementary HTTP failure; wrong auth routing; absent Go subscription;

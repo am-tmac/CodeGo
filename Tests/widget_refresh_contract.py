@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class WidgetRefreshContract(unittest.TestCase):
     def test_build30_accessibility_preserves_compact_visuals(self):
         # Visual sizes stay compact; the surrounding hit targets and text-size fallback expand.
-        app = (ROOT / 'App/CodexUsageApp.swift').read_text()
+        app = (ROOT / 'App/CodeGoApp.swift').read_text()
         connect = (ROOT / 'App/ConnectViews.swift').read_text()
         self.assertIn('accessibilityReduceMotion', app)
         self.assertIn('dynamicTypeSize', connect)
@@ -23,7 +23,7 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('MeterColors(brand: brand', connect)
 
     def test_fifteen_minute_request(self):
-        source = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
+        source = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         self.assertIn('addingTimeInterval(900)', source)
         self.assertNotIn('addingTimeInterval(1800)', source)
     def test_cache_only_control_is_present_and_never_disguised_as_refresh(self):
@@ -32,7 +32,7 @@ class WidgetRefreshContract(unittest.TestCase):
         # handshake the widget had NO refresh control at all. The policy is now: exactly one
         # control, present in BOTH states, and the two states must never look alike.
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
-        widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
+        widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         affordance = views.split('struct RefreshAffordance: View {', 1)[1].split('\nstruct DeepSeekCompactView:', 1)[0]
         self.assertIn('if canRefresh {', affordance)
         self.assertIn('} else {', affordance)
@@ -70,7 +70,7 @@ class WidgetRefreshContract(unittest.TestCase):
         # the missing step and refuse the switch instead of silently failing.
         storage = (ROOT / 'Shared/Storage.swift').read_text()
         store = (ROOT / 'Shared/DashboardStore.swift').read_text()
-        app = (ROOT / 'App/CodexUsageApp.swift').read_text()
+        app = (ROOT / 'App/CodeGoApp.swift').read_text()
         self.assertIn('static var canEnableWidgetRefreshConsent: Bool', storage)
         self.assertIn('static var widgetConsentBlockerText: String', storage)
         self.assertIn('static func refreshAuthorization() -> WidgetRefreshAuthorization', store)
@@ -88,7 +88,7 @@ class WidgetRefreshContract(unittest.TestCase):
         # permanently dead switch and a cache-only widget, so an explicit acknowledged override
         # exists — and it may only authorize a group this device really probed.
         storage = (ROOT / 'Shared/Storage.swift').read_text()
-        app = (ROOT / 'App/CodexUsageApp.swift').read_text()
+        app = (ROOT / 'App/CodeGoApp.swift').read_text()
         self.assertIn('static var canForceWidgetRefreshConsent: Bool', storage)
         self.assertIn('func permitsForced(group: String?) -> Bool', storage)
         self.assertIn('consent.permitsForced(group: diagnostics.selectedGroup)', storage)
@@ -109,7 +109,7 @@ class WidgetRefreshContract(unittest.TestCase):
         # to the ChatGPT login" (under 设置 it looked missing). The user then asked for the
         # Nowdex-style flow — "+" / empty state → 连接账号 grid → one page per service — so all four
         # sign-ins moved there together and the status page carries account cards only.
-        app = (ROOT / 'App/CodexUsageApp.swift').read_text()
+        app = (ROOT / 'App/CodeGoApp.swift').read_text()
         connect = (ROOT / 'App/ConnectViews.swift').read_text()
         status = app.split('var statusSections: some View {', 1)[1].split('@ViewBuilder var settingsSections', 1)[0]
         settings = app.split('@ViewBuilder var settingsSections', 1)[1]
@@ -129,7 +129,7 @@ class WidgetRefreshContract(unittest.TestCase):
         # No demo mode: it could only show invented numbers.
         self.assertNotIn('体验演示', connect + app)
     def test_cards_use_official_marks_and_live_countdowns(self):
-        app = (ROOT / 'App/CodexUsageApp.swift').read_text()
+        app = (ROOT / 'App/CodeGoApp.swift').read_text()
         connect = (ROOT / 'App/ConnectViews.swift').read_text()
         claude = (ROOT / 'App/ClaudePanel.swift').read_text()
         catalog = ROOT / 'App/Assets.xcassets'
@@ -148,15 +148,15 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('Countdown.resetLine(date, now: context.date)', connect)
         # Build 42 adds API-provider reset countdowns; App-only brand views still stay out.
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
-        widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
+        widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         for token in ['BrandMark', 'LogoOpenAI', 'SummaryLine']:
             self.assertNotIn(token, views + widget)
     def test_claude_signs_in_with_oauth_and_keeps_no_session_secret(self):
         # Contract change (build 21): the embedded cookie-scraping browser and the manual
         # sessionKey/key path are DELETED, not hidden — no paste field, no cookie store, no
         # key-based fetch, no allowlist of challenge hosts. The provider is a real sign-in.
-        for name in ['App/ClaudePanel.swift', 'Shared/Claude.swift', 'App/CodexUsageApp.swift',
-                     'Widget/CodexUsageWidget.swift', 'Scripts/package_widget_build31.py']:
+        for name in ['App/ClaudePanel.swift', 'Shared/Claude.swift', 'App/CodeGoApp.swift',
+                     'Widget/CodeGoWidget.swift', 'Scripts/package_widget_build31.py']:
             text = (ROOT / name).read_text()
             self.assertNotIn('sessionKey', text)
             self.assertNotIn('saveCookie', text)
@@ -208,7 +208,7 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertEqual(claude.count('CodexUsage.Claude.session.v1'), 1)
         legacy = claude.split('static let legacyService', 1)[0]
         self.assertNotIn('CodexUsage.Claude.session.v1', legacy)
-        self.assertIn('invalidateLegacyCredential()', (ROOT / 'App/CodexUsageApp.swift').read_text())
+        self.assertIn('invalidateLegacyCredential()', (ROOT / 'App/CodeGoApp.swift').read_text())
         # The risk is stated, not glossed: no claim of compliance or stability.
         self.assertIn('不授权第三方', panel)
         self.assertIn('可能随时被更改或封禁', panel)
@@ -227,7 +227,7 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('#if CODEX_WIDGET\n/// One control for the whole widget', source)
         self.assertIn('struct RefreshDashboardIntent: AppIntent', source)
         self.assertIn('static var openAppWhenRun = false', source)
-        project = (ROOT / 'CodexUsage.xcodeproj/project.pbxproj').read_text()
+        project = (ROOT / 'CodeGo.xcodeproj/project.pbxproj').read_text()
         self.assertEqual(project.count('SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) CODEX_WIDGET"'), 2)
     def test_preserves_namespace_without_migration(self):
         source = (ROOT / 'Shared/Storage.swift').read_text()
@@ -235,7 +235,7 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('consent.permits(', source)
         self.assertIn('try checkPermission()', source)
     def test_in_progress_label_is_persisted_and_truthful(self):
-        widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
+        widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
         storage = (ROOT / 'Shared/Storage.swift').read_text()
         # A truthful static label, never an animated/fake spinner.
@@ -254,7 +254,7 @@ class WidgetRefreshContract(unittest.TestCase):
     def test_single_tap_stays_single_request(self):
         source = (ROOT / 'Shared/Storage.swift').read_text()
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
-        widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
+        widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         self.assertIn('attempt.begin(Date()); try attempt.save(id)', source)
         self.assertIn('.reloadTimelines(ofKind: "CodexUsageWidget")', source)
         # Only the extension compiles an intent; the App never issues a widget fetch.
@@ -284,7 +284,7 @@ class WidgetRefreshContract(unittest.TestCase):
         return self._phase_block(project, phase_ids[0], 'Resources')
     def test_widget_title_has_no_logo_asset_or_drawing_code(self):
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
-        project = (ROOT / 'CodexUsage.xcodeproj/project.pbxproj').read_text()
+        project = (ROOT / 'CodeGo.xcodeproj/project.pbxproj').read_text()
         # Build 7 removed the Blossom title mark; the header is the plain bold title.
         self.assertIn('Text("Codex").font(.system(size: 19, weight: .bold))', views)
         for forbidden in ['CodexBlossom', 'CodexBlossomMark', 'Image("CodexBlossom")',
@@ -300,47 +300,12 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertNotIn('CodexBlossom', configure)
         self.assertNotIn('widget_assets', configure)
         # The App's own catalog and Resources phase are untouched; the widget compiles no catalog.
-        self.assertNotIn('Assets.xcassets', self._resources_phase(project, 'CodexUsageWidget'))
-        app_catalog = self._resources_phase(project, 'CodexUsage')
+        self.assertNotIn('Assets.xcassets', self._resources_phase(project, 'CodeGoWidget'))
+        app_catalog = self._resources_phase(project, 'CodeGo')
         self.assertEqual(re.findall(r'path = (App/Assets\.xcassets)', project), ['App/Assets.xcassets'])
         self.assertIn('Assets.xcassets in Resources', app_catalog)
-    def test_account_label_is_display_only_masked_by_default_and_never_invented(self):
-        views = (ROOT / 'Shared/UsageViews.swift').read_text()
-        storage = (ROOT / 'Shared/Storage.swift').read_text()
-        models = (ROOT / 'Shared/Models.swift').read_text()
-        auth = (ROOT / 'Shared/AuthAPI.swift').read_text()
-        app = (ROOT / 'App/CodexUsageApp.swift').read_text()
-        # Widget renders the saved label on one line so the quota rows cannot be pushed.
-        self.assertIn('snapshot?.accountLabel', views)
-        self.assertIn('truncationMode(.middle)', views)
-        self.assertIn('layoutPriority(1)', views)
-        # One masking decision for App and Widget; default is masked.
-        self.assertIn('masked: !showFull', storage)
-        self.assertIn('public static func text(identity: String?, plan: String?, masked: Bool) -> String', models)
-        self.assertIn('snapshotLabel(email: email, plan: plan, showFull: showFullAccountInWidget)', storage)
-        self.assertIn('guard let url, let data = try? Data(contentsOf: url),', storage)
-        self.assertIn('guard !isWidget, let url else { throw ServiceError.storage("共享容器不可用") }', storage)
-        self.assertIn('"widget-identity-display.json"', storage)
-        self.assertIn('WidgetIdentityDisplay', storage)
-        self.assertIn('showFullAccountInWidget', app)
-        self.assertIn('setShowFullAccountInWidget', app)
-        # Identity is a read-only display claim; a plan is never invented.
-        self.assertIn('static func emailClaim', auth)
-        self.assertIn('unknownIdentity', models)
-        self.assertIn('guard let plan, !plan.isEmpty else { return base }', models)
-        # The local sequence label is gone from the App list/switcher.
-        self.assertNotIn('账号 \\(index', app)
-        self.assertIn('model.label(for: id)', app)
-        # The snapshot carries display text only: no tokens or credentials.
-        self.assertIn('public var accountLabel: String? = nil', models)
-        block = re.search(r'public struct UsageSnapshot:[^{]+\{.*?\n\}', models, re.S).group(0)
-        for forbidden in ['accessToken', 'refreshToken', 'idToken']:
-            self.assertNotIn(forbidden, block)
-        self.assertIn('accountLabel: SharedStorage.snapshotLabel', storage)
-
-
     def test_one_top_right_refresh_control_per_family(self):
-        widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
+        widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
         # Columns never draw their own button; each family gets exactly one control, pinned to the
         # top-right corner. Build 10 regressed by drawing it only for the medium family (as a footer),
@@ -365,7 +330,7 @@ class WidgetRefreshContract(unittest.TestCase):
         # Deduplicated: the same account is never refreshed twice by one tap.
         self.assertIn('public static func unique(_ ids: [String?]) -> [String]', (ROOT / 'Shared/Models.swift').read_text())
     def test_refresh_hit_area_anchors_codex_corner_and_deepseek_bottom_right(self):
-        widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
+        widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
         # The 44pt hit region is at the outer Codex top-right corner, but at the
         # *bottom-right* of the stacked wallet: old 38pt bottom padding placed the
@@ -382,8 +347,8 @@ class WidgetRefreshContract(unittest.TestCase):
     def test_theme_preference_is_shared_applied_and_not_hardcoded(self):
         models = (ROOT / 'Shared/Models.swift').read_text()
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
-        widget = (ROOT / 'Widget/CodexUsageWidget.swift').read_text()
-        app = (ROOT / 'App/CodexUsageApp.swift').read_text()
+        widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
+        app = (ROOT / 'App/CodeGoApp.swift').read_text()
         # One stored preference, read by the extension and written by the App.
         self.assertIn('public enum ThemePreference: String, CaseIterable, Codable, Sendable', models)
         self.assertIn('case system, light, dark', models)
@@ -423,9 +388,6 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('fresh.refreshToken == stored.refreshToken', recovery)
         # Masking rules are untouched: the shared snapshot is masked unless opted in,
         # and the recovered identity feeds the same single masking decision.
-        self.assertIn('masked: !showFull', storage)
-        self.assertIn('snapshotLabel(email: email, plan: plan, showFull: showFullAccountInWidget)', storage)
-        self.assertIn('credentials.displayIdentity, plan: usage.planType', storage)
         self.assertIn('public var displayIdentity: String?', auth)
 
 

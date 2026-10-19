@@ -1,5 +1,5 @@
 import XCTest
-@testable import CodexUsageCore
+@testable import CodeGo
 
 final class TokensCITests: XCTestCase {
     struct Wire: HTTPTransport {

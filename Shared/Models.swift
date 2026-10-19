@@ -329,7 +329,6 @@ public struct UsageSnapshot: Codable, Equatable, Sendable {
     /// Display label written at save time. It is already masked unless the user
     /// explicitly opted in to exposing the full identity in the widget; tokens and
     /// credentials are never stored here. Optional so older snapshots still decode.
-    public var accountLabel: String? = nil
     public func isStale(at now: Date = Date()) -> Bool {
         now.timeIntervalSince(updatedAt) > 1800 || [usage.rateLimit?.primaryWindow, usage.rateLimit?.secondaryWindow].compactMap { $0?.resetDate }.contains { $0 <= now }
     }

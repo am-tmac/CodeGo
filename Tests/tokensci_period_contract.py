@@ -7,7 +7,7 @@ class PeriodContracts(unittest.TestCase):
         source = (R/'Shared/TokensCI.swift').read_text()
         self.assertIn('for day in todayContributions', source)
         panel = (R/'App/TokensCIPanel.swift').read_text() + (R/'App/TokensCIAnalyticsView.swift').read_text()
-        widget = (R/'Widget/CodexUsageWidget.swift').read_text()
+        widget = (R/'Widget/CodeGoWidget.swift').read_text()
         for text in (panel, widget):
             self.assertIn('client.displayName', text)
             self.assertIn('client.topModel?.cost', text)

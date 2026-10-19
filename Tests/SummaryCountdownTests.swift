@@ -1,5 +1,5 @@
 import XCTest
-@testable import CodexUsageCore
+@testable import CodeGo
 
 /// build 27: collapsed-card summary + reset countdowns. Everything is derived from the reset time
 /// and remaining share the service reported; nothing is estimated.

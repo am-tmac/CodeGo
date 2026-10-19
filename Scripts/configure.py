@@ -2,6 +2,7 @@ from pathlib import Path
 import plistlib, json
 root = Path(__file__).resolve().parent.parent
 shared = {'KeychainGroupIdentifier':'$(KEYCHAIN_GROUP_IDENTIFIER)', 'AppGroupIdentifier':'$(APP_GROUP_IDENTIFIER)', 'KeychainAccessGroup':'$(AppIdentifierPrefix)$(KEYCHAIN_GROUP_IDENTIFIER)'}
+# CodeGo preserves the registered URL identity and scheme across the rename.
 app = dict(shared, CFBundleURLTypes=[{'CFBundleURLName':'CodexUsage', 'CFBundleURLSchemes':['codexusage']}])
 widget = dict(shared, NSExtension={'NSExtensionPointIdentifier':'com.apple.widgetkit-extension'})
 entitlements = {'com.apple.security.application-groups':['$(APP_GROUP_IDENTIFIER)'], 'keychain-access-groups':['$(AppIdentifierPrefix)$(KEYCHAIN_GROUP_IDENTIFIER)']}

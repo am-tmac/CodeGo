@@ -1,5 +1,5 @@
 import XCTest
-@testable import CodexUsageCore
+@testable import CodeGo
 final class UsageTests: XCTestCase {
     func testResetTimestampSameDayDifferentDayAndMissing() {
         var calendar = Calendar(identifier: .gregorian)

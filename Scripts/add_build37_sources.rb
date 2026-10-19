@@ -1,9 +1,9 @@
 require 'xcodeproj'
 root = File.expand_path('..', __dir__)
 Dir.chdir(root)
-p = Xcodeproj::Project.open('CodexUsage.xcodeproj')
-app = p.targets.find { |t| t.name == 'CodexUsage' }
-widget = p.targets.find { |t| t.name == 'CodexUsageWidget' }
+p = Xcodeproj::Project.open('CodeGo.xcodeproj')
+app = p.targets.find { |t| t.name == 'CodeGo' }
+widget = p.targets.find { |t| t.name == 'CodeGoWidget' }
 plan = { 'Shared/TokensCIHistory.swift' => [app, widget], 'App/TokensCIAnalyticsView.swift' => [app] }
 plan.each do |path, targets|
   ref = p.files.find { |f| f.path == path } || p.main_group.new_file(path)

@@ -138,7 +138,7 @@ struct DashboardWidgetView: View {
         } else if value.provider == "tokensci" {
             TokensCICompactView(snapshot: value.tokensci, palette: palette)
         } else {
-            CompactUsageView(showResetCredits: family != .systemSmall, snapshot: value.usage, failed: value.failed, refreshing: value.refreshing,
+            CompactUsageView(snapshot: value.usage, failed: value.failed, refreshing: value.refreshing,
                              sharingUnavailable: !SharedStorage.cacheSharingAvailable, cacheOnly: !value.canRefresh,
                              palette: palette, display: entry.display)
         }

@@ -12,7 +12,7 @@ class AnalyticsContracts(unittest.TestCase):
    self.assertIn(marker,s)
   self.assertIn('.chartLegend(.hidden)',s)
   self.assertIn('其他',s)
-  project=(R/'CodexUsage.xcodeproj/project.pbxproj').read_text()
+  project=(R/'CodeGo.xcodeproj/project.pbxproj').read_text()
   # One PBXBuildFile and one Sources entry only => App membership, not Widget.
   self.assertEqual(project.count('TokensCIAnalyticsView.swift in Sources'),2)
  def test_history_privacy_and_widget_bytes(self):

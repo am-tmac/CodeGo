@@ -2,11 +2,11 @@ require 'xcodeproj'
 require 'fileutils'
 root = File.expand_path('..', __dir__)
 Dir.chdir(root)
-p = Xcodeproj::Project.new('CodexUsage.xcodeproj')
+p = Xcodeproj::Project.new('CodeGo.xcodeproj')
 public_config = p.main_group.new_file('Configuration/Public.xcconfig')
-app = p.new_target(:application, 'CodexUsage', :ios, '17.0')
-widget = p.new_target(:app_extension, 'CodexUsageWidget', :ios, '17.0')
-tests = p.new_target(:unit_test_bundle, 'CodexUsageTests', :ios, '17.0')
+app = p.new_target(:application, 'CodeGo', :ios, '17.0')
+widget = p.new_target(:app_extension, 'CodeGoWidget', :ios, '17.0')
+tests = p.new_target(:unit_test_bundle, 'CodeGoTests', :ios, '17.0')
 shared = Dir['Shared/*.swift']
 [[app, shared + Dir['App/*.swift']], [widget, shared + Dir['Widget/*.swift']], [tests, Dir['Tests/*.swift']]].each do |target, files|
   files.each { |file| target.source_build_phase.add_file_reference(p.main_group.new_file(file)) }
@@ -29,8 +29,8 @@ tests.add_dependency(app)
     s['CODEX_APP_BUNDLE_IDENTIFIER'] = 'com.personal.CodexUsage'
     s['PRODUCT_BUNDLE_IDENTIFIER'] = target == widget ? '$(CODEX_APP_BUNDLE_IDENTIFIER).Widget' : (target == app ? '$(CODEX_APP_BUNDLE_IDENTIFIER)' : '$(CODEX_APP_BUNDLE_IDENTIFIER).Tests')
     s['ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME'] = ''
-    s['CURRENT_PROJECT_VERSION'] = '17'
-    s['MARKETING_VERSION'] = '2.0'
+    s['CURRENT_PROJECT_VERSION'] = '43'
+    s['MARKETING_VERSION'] = '4.6'
     s['GENERATE_INFOPLIST_FILE'] = 'YES'
     s['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
     s['SWIFT_EMIT_LOC_STRINGS'] = 'YES'
@@ -41,14 +41,14 @@ tests.add_dependency(app)
     s['SUPPORTED_PLATFORMS'] = 'iphoneos iphonesimulator'
     s['SUPPORTS_MACCATALYST'] = 'NO'
     if target == tests
-      s['TEST_HOST'] = '$(BUILT_PRODUCTS_DIR)/CodexUsage.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CodexUsage'
+      s['TEST_HOST'] = '$(BUILT_PRODUCTS_DIR)/CodeGo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CodeGo'
       s['BUNDLE_LOADER'] = '$(TEST_HOST)'
-      s['PRODUCT_MODULE_NAME'] = 'CodexUsageTests'
+      s['PRODUCT_MODULE_NAME'] = 'CodeGoTests'
     else
       s['INFOPLIST_FILE'] = target == app ? 'App/Info.plist' : 'Widget/Info.plist'
       s['CODE_SIGN_ENTITLEMENTS'] = 'Configuration/Shared.entitlements'
-      s['PRODUCT_MODULE_NAME'] = target == app ? 'CodexUsageCore' : 'CodexUsageWidget'
-      s['INFOPLIST_KEY_CFBundleDisplayName'] = target == app ? 'Codex 用量' : 'Codex 额度'
+      s['PRODUCT_MODULE_NAME'] = target == app ? 'CodeGo' : 'CodeGoWidget'
+      s['INFOPLIST_KEY_CFBundleDisplayName'] = target == app ? 'CodeGo' : 'CodeGo'
       s['LD_RUNPATH_SEARCH_PATHS'] = ['$(inherited)', '@executable_path/Frameworks', '@executable_path/../../Frameworks']
     end
   end
@@ -60,5 +60,5 @@ scheme = Xcodeproj::XCScheme.new
 scheme.add_build_target(app)
 scheme.add_test_target(tests)
 scheme.set_launch_target(app)
-scheme.save_as(p.path, 'CodexUsage', true)
-puts 'Generated CodexUsage.xcodeproj'
+scheme.save_as(p.path, 'CodeGo', true)
+puts 'Generated CodeGo.xcodeproj'

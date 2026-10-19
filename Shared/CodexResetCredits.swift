@@ -36,3 +36,9 @@ public struct CodexResetCredits: Codable, Equatable, Sendable {
         return "最早 \(formatter.string(from: expiry)) 过期"
     }
 }
+
+extension UsageResponse {
+    func resetCreditsText(now: Date) -> String {
+        (resetCreditDetails.map { $0.usable(now: now).count } ?? rateLimitResetCredits?.availableCount).map(String.init) ?? "—"
+    }
+}

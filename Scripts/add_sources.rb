@@ -4,9 +4,9 @@
 require 'xcodeproj'
 root = File.expand_path('..', __dir__)
 Dir.chdir(root)
-p = Xcodeproj::Project.open('CodexUsage.xcodeproj')
-app = p.targets.find { |t| t.name == 'CodexUsage' }
-widget = p.targets.find { |t| t.name == 'CodexUsageWidget' }
+p = Xcodeproj::Project.open('CodeGo.xcodeproj')
+app = p.targets.find { |t| t.name == 'CodeGo' }
+widget = p.targets.find { |t| t.name == 'CodeGoWidget' }
 plan = { 'Shared/CardOrder.swift' => [app, widget], 'Shared/Antigravity.swift' => [app, widget], 'App/ExtraProviderPanels.swift' => [app], 'App/AntigravityLogin.swift' => [app] }
 existing = p.files.map(&:path)
 plan.each do |path, targets|

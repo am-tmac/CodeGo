@@ -1,6 +1,6 @@
 import XCTest
 import Security
-@testable import CodexUsageCore
+@testable import CodeGo
 
 /// Failure modes found in the 2026-09 code review. Each test pins one way the App could lose a
 /// credential, show a guessed number, or accept a login it should reject.
@@ -30,7 +30,7 @@ final class ReviewFixTests: XCTestCase {
     func testFix02OnlyIntentRequestsProgressReload() throws {
         let storage = try reviewSource("Shared/Storage.swift")
         let views = try reviewSource("Shared/UsageViews.swift")
-        let widget = try reviewSource("Widget/CodexUsageWidget.swift")
+        let widget = try reviewSource("Widget/CodeGoWidget.swift")
         XCTAssertTrue(storage.contains("if notifyProgress { WidgetCenter.shared.reloadTimelines"))
         XCTAssertTrue(views.contains("WidgetRefresh.one(id: id, provider: provider, notifyProgress: true)"))
         XCTAssertTrue(views.contains("provider: String, notifyProgress: Bool = false"))
@@ -66,7 +66,7 @@ final class ReviewFixTests: XCTestCase {
     }
 
     func testFix07UpdateKeyCarriesAccountIntoPanelState() throws {
-        let app = try reviewSource("App/CodexUsageApp.swift")
+        let app = try reviewSource("App/CodeGoApp.swift")
         let routes = try reviewSource("App/ConnectViews.swift")
         let panel = try reviewSource("App/DeepSeekPanel.swift")
         XCTAssertTrue(app.contains("onUpdateKey: { connect = .deepSeekReplacement(id) }"))
@@ -84,7 +84,7 @@ final class ReviewFixTests: XCTestCase {
     }
 
     func testFix09RootObservesCompletedSignIns() throws {
-        let app = try reviewSource("App/CodexUsageApp.swift")
+        let app = try reviewSource("App/CodeGoApp.swift")
         for name in ["claudeSignedIn", "antigravitySignedIn"] {
             let marker = ".onReceive(NotificationCenter.default.publisher(for: ." + name + "))"
             XCTAssertTrue(app.contains(marker))
@@ -499,7 +499,7 @@ final class ReviewFixTests: XCTestCase {
 
     func testBuild30ClaudeWidgetWiringShowsOpenAppAndStaleCache() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        let widget = try String(contentsOf: root.appendingPathComponent("Widget/CodexUsageWidget.swift"))
+        let widget = try String(contentsOf: root.appendingPathComponent("Widget/CodeGoWidget.swift"))
         let views = try String(contentsOf: root.appendingPathComponent("Shared/UsageViews.swift"))
         let compact = try XCTUnwrap(views.components(separatedBy: "struct ClaudeCompactView: View {").last)
             .components(separatedBy: "struct CompactUsageView: View {")[0]

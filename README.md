@@ -1,8 +1,15 @@
-# CodexUsage · iPhone + WidgetKit
+# CodeGo · iPhone + WidgetKit
 
 > 非 OpenAI、Google 或 DeepSeek 官方产品。项目按 MIT License 开源；品牌名称仅用于描述兼容服务。
 
-独立 SwiftUI iOS 17+ 自用 App：iPhone 自行设备代码 OAuth 登录、直接读取 Codex 额度，在共享签名获授权时 WidgetKit 自行请求更新。没有 Mac 后端、CLIProxyAPI、CLI、Cookie 导入或第三方运行时依赖。没有读取/复制电脑已有的 OAuth 凭据。
+CodeGo（原名 CodexUsage）是独立 SwiftUI iOS 17+ 自用 App：iPhone 自行设备代码 OAuth 登录、直接读取 Codex 额度，在共享签名获授权时 WidgetKit 自行请求更新。没有 Mac 后端、CLIProxyAPI、CLI、Cookie 导入或第三方运行时依赖。没有读取/复制电脑已有的 OAuth 凭据。
+
+## 4.6 / build 43：CodeGo、组件重置积分
+
+- App、扩展显示名称、工程、target、scheme 和产物改为 CodeGo；原 Bundle ID、App Group、Keychain、缓存路径与 WidgetKit kind 保留，已安装组件仍使用原标识。
+- 所有 Codex 组件槽位底部显示「重置积分 N · 更新 HH:mm」，保留过期标记。明细按 available 且未到期计算，缺明细回退 available_count，无数据显示 —。
+- 删除组件账号名、完整邮箱设置及共享快照身份字段；旧 JSON 可读取，重新编码丢弃旧身份字段，App 启动尽力删除旧显示设置文件。App 账号列表继续显示账号名。
+- 构建：`python3 Scripts/build43_release.py && python3 Scripts/package_widget_build43.py`；产物 `Dist/CodeGo-4.6-build43-unsigned.ipa`。测试、截图、SHA-256 见 `VERIFICATION-build43.md`。组件字节基线有意更新。
 
 ## 4.5 / build 42：重置额度、OpenCode Go、Command Code
 
@@ -42,7 +49,7 @@
 
 ## 打开与真机签名
 
-1. 打开 `CodexUsage.xcodeproj`，选择 `CodexUsage` scheme。
+1. 打开 `CodeGo.xcodeproj`，选择 `CodeGo` scheme。
 2. App、Widget 两个 target 的 Signing & Capabilities 选择你自己的开发者 Team。没有预置任何个人证书或 Team ID；无需提供私钥或密码给助手。
 3. 将 App Bundle Identifier 改成你拥有的唯一 ID（例如 `com.yourname.CodexUsage`），Widget 必须是 App ID 的子前缀（例如 `com.yourname.CodexUsage.Widget`）。测试 target 也可改成自己的 ID。
 4. **两个 target** 的 Build Settings 中把 `APP_GROUP_IDENTIFIER` 改成同一个已在开发者账号注册的 App Group（例如 `group.com.yourname.CodexUsage`）；把 `KEYCHAIN_GROUP_IDENTIFIER` 改成同一个 `com.yourname.CodexUsage.shared`。现有 entitlements 与 Info.plist 使用这些变量。Signing & Capabilities 中确认两个 target 都具有相同的 App Groups 和 Keychain Sharing，实际 provisioning profile 也必须包含它们。
@@ -102,7 +109,7 @@ Anthropic 的政策不允许第三方 App 提供 Claude.ai 登录或收集、存
 
 ```sh
 # 无需 Ruby 或生成器，现有 Xcode 工程可直接使用
-xcodebuild -project CodexUsage.xcodeproj -scheme CodexUsage \
+xcodebuild -project CodeGo.xcodeproj -scheme CodeGo \
   -sdk iphoneos -destination 'generic/platform=iOS' \
   -derivedDataPath BuildDevice CODE_SIGNING_ALLOWED=NO build
 
@@ -111,7 +118,7 @@ swift test
 
 # 模拟器完整测试：使用本地 ad-hoc 签名，不用个人证书。
 # 不能关闭签名运行安全存储测试：App Groups/Keychain 需要 entitlements。
-xcodebuild -project CodexUsage.xcodeproj -scheme CodexUsage \
+xcodebuild -project CodeGo.xcodeproj -scheme CodeGo \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -derivedDataPath BuildSignedSim CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES test
 ```

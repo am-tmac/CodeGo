@@ -576,7 +576,6 @@ struct ClaudeCompactView: View {
 }
 
 struct CompactUsageView: View {
-    var showResetCredits = false
     let snapshot: UsageSnapshot?
     var failed = false
     var refreshing = false
@@ -591,16 +590,11 @@ struct CompactUsageView: View {
             // pushed out by a longer label or by a missing 5-hour window.
             row("5h", window: snapshot?.usage.rateLimit?.primaryWindow)
             row("7d", window: snapshot?.usage.rateLimit?.secondaryWindow)
-            if showResetCredits {
-                Text("重置额度 " + ((snapshot?.usage.resetCreditDetails.map { $0.usable().count } ?? snapshot?.usage.rateLimitResetCredits?.availableCount).map(String.init) ?? "—"))
-                    .font(.system(size: 9)).foregroundStyle(palette.secondary)
-            }
             Spacer(minLength: 0)
             HStack(spacing: 3) {
-                if let label = snapshot?.accountLabel, !label.isEmpty {
-                    Text(label).lineLimit(1).truncationMode(.middle)
-                    Text("·")
-                }
+                Text("重置积分 " + (snapshot?.usage.resetCreditsText(now: Date()) ?? "—"))
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Text("·")
                 HStack(spacing: 3) {
                     Text("更新")
                     if let updatedAt = snapshot?.updatedAt { Text(updatedAt, style: .time) }

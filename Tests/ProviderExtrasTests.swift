@@ -1,5 +1,5 @@
 import XCTest
-@testable import CodexUsageCore
+@testable import CodeGo
 
 /// The two App-only providers are parsing code first: every number shown has to come out of the
 /// payload, and a payload that does not carry a field must not turn into a guess.

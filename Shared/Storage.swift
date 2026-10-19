@@ -96,61 +96,15 @@ public enum SharedStorage {
         if diagnostics.observedDefaultGroup != session.group { return "实测默认组与握手组不一致，请重新握手。" }
         return (try? session.appConfirmed(read: session.read)) == true ? "" : "等待组件写回随机挑战（握手没走完）。可以直接开启：那会记录为「未完成跨进程验证」的强制授权，组件会真实尝试刷新，读不到凭据时会显示刷新失败并保留缓存。"
     }
-    // Display-only identity policy. Stored in the shared container because BOTH the
-    // App and the extension write snapshots and must mask identically. Default (no
-    // file) is masked: the full identity never reaches the shared snapshot unless
-    // the user explicitly opts in. Tokens are never involved either way.
-    private static var identityDisplayURL: URL? { capabilities.routing.sharedURL?.appendingPathComponent("widget-identity-display.json") }
-    static var showFullAccountInWidget: Bool { showFullAccountInWidget(at: identityDisplayURL) }
-    /// `url` is injected so the file semantics stay testable without a shared container.
-    static func showFullAccountInWidget(at url: URL?) -> Bool {
-        guard let url, let data = try? Data(contentsOf: url),
-              let value = try? JSONDecoder().decode(WidgetIdentityDisplay.self, from: data) else { return false }
-        return value.showFullAccountInWidget
-    }
-    static func setShowFullAccountInWidget(_ enabled: Bool) throws {
-        try setShowFullAccountInWidget(enabled, at: identityDisplayURL, isWidget: isWidget)
-    }
-    static func setShowFullAccountInWidget(_ enabled: Bool, at url: URL?, isWidget: Bool) throws {
-        // Only the App may change the policy; the extension must never widen exposure.
-        guard !isWidget, let url else { throw ServiceError.storage("共享容器不可用") }
-        if enabled {
-            try JSONEncoder().encode(WidgetIdentityDisplay(showFullAccountInWidget: true)).write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-        } else if FileManager.default.fileExists(atPath: url.path) {
-            // Disabling removes the file so the default (masked) applies everywhere.
-            try FileManager.default.removeItem(at: url)
+    /// Obsolete preference cleanup, once per App process; never writes identity data.
+    static func removeLegacyWidgetIdentityPreference() { _ = legacyWidgetIdentityCleanup }
+    private static let legacyWidgetIdentityCleanup: Void = {
+        guard !isWidget else { return }
+        if let url = capabilities.routing.sharedURL?.appendingPathComponent("widget-identity-display.json") {
+            try? FileManager.default.removeItem(at: url)
         }
-    }
-    /// The single place the shared snapshot label is produced, used by App and Widget.
-    /// `showFull` is injected so both branches stay testable without a shared container.
-    static func snapshotLabel(email: String?, plan: String?, showFull: Bool) -> String {
-        AccountLabel.text(identity: email, plan: AccountLabel.plan(plan), masked: !showFull)
-    }
-    static func snapshotLabel(email: String?, plan: String?) -> String {
-        snapshotLabel(email: email, plan: plan, showFull: showFullAccountInWidget)
-    }
+    }()
     static func accountEmail(_ account: String) -> String? { (try? credentials(account: account))?.displayIdentity }
-    /// Re-labels existing snapshots after the masking switch changes, so the widget
-    /// reflects the new policy without waiting for the next refresh.
-    static func relabelSnapshots() {
-        guard !isWidget, let ids = try? accountIDs() else { return }
-        for id in ids {
-            guard let snapshot = snapshot(account: id) else { continue }
-            let relabeled = UsageSnapshot(usage: snapshot.usage, updatedAt: snapshot.updatedAt,
-                                          accountLabel: snapshotLabel(email: accountEmail(id), plan: snapshot.usage.planType))
-            try? JSONEncoder().encode(relabeled).write(to: snapshotURL(id), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-        }
-    }
-    /// Rewrites only the display label of a stored snapshot so the widget shows a
-    /// just-recovered identity without waiting for the next refresh. Masked unless the
-    /// user opted in; no credentials or tokens are written here.
-    private static func relabelSnapshot(account: String, identity: String?) {
-        guard !isWidget, let snapshot = snapshot(account: account), let url = try? snapshotURL(account) else { return }
-        let label = snapshotLabel(email: identity, plan: snapshot.usage.planType)
-        guard snapshot.accountLabel != label else { return }
-        let relabeled = UsageSnapshot(usage: snapshot.usage, updatedAt: snapshot.updatedAt, accountLabel: label)
-        try? JSONEncoder().encode(relabeled).write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-    }
     static func selectedCredentialGroup(_ id: String) -> String? {
         guard let group = permittedGroup else { return nil }
         var q = StorageRouting(sharedURL: nil, authorizedGroup: nil, isWidget: false).query()
@@ -336,7 +290,6 @@ public enum SharedStorage {
         let updated = Credentials(accessToken: fresh.accessToken, refreshToken: fresh.refreshToken,
                                   accountID: fresh.accountID, email: recovered, expiresAt: fresh.expiresAt)
         guard (try? save(updated, account: account, route: route)) != nil else { return stored }
-        relabelSnapshot(account: account, identity: recovered)
         return updated
     }
     static func save(_ credentials: Credentials, account: String = "phone-owned", route: StorageRouting = routing) throws {
@@ -429,10 +382,6 @@ struct WidgetCacheState: Codable {
     func allowsRefresh(using routing: StorageRouting) -> Bool {
         routing.isShared && credentialGroup != nil && credentialGroup == routing.authorizedGroup
     }
-}
-// Non-secret display policy; no credentials or tokens.
-struct WidgetIdentityDisplay: Codable {
-    let showFullAccountInWidget: Bool
 }
 
 struct StorageRouting {
@@ -713,8 +662,7 @@ public actor UsageService {
                 usage = try await api.usageWithResetCredits(credentials)
             }
             try checkPermission()
-            let result = UsageSnapshot(usage: usage, updatedAt: Date(),
-                                       accountLabel: SharedStorage.snapshotLabel(email: credentials.displayIdentity, plan: usage.planType))
+            let result = UsageSnapshot(usage: usage, updatedAt: Date())
             try SharedStorage.save(result, account: id)
             attempt.succeed(Date()); try attempt.save(id)
             return result

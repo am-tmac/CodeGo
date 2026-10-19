@@ -11,7 +11,7 @@ class DashboardContract(unittest.TestCase):
         self.assertIn('DeepSeekService.shared.install', app)
         self.assertIn('granted', app)
         self.assertIn('toppedUp', app)
-        widget = (R/'Widget/CodexUsageWidget.swift').read_text()
+        widget = (R/'Widget/CodeGoWidget.swift').read_text()
         for token in ['AppIntentConfiguration', '.systemSmall, .systemMedium', 'leftAccount', 'rightAccount', 'DashboardStore.canRefresh', 'WidgetRefresh.one(']:
             self.assertIn(token, widget)
         # build 28: the per-provider dispatch is shared by the timeline and the button.
@@ -39,7 +39,7 @@ class DashboardContract(unittest.TestCase):
             self.assertNotIn(token, views)
         # App 侧的 7 天 token 柱状图是 App-only 的（由 Tests/token_usage_contract.py 断言）；
         # 组件永不引入 Charts。
-        self.assertNotIn('import Charts', (R/'Widget/CodexUsageWidget.swift').read_text())
+        self.assertNotIn('import Charts', (R/'Widget/CodeGoWidget.swift').read_text())
         storage = (R/'Shared/Storage.swift').read_text()
     def test_deepseek_wallet_depth(self):
         # build 29 (approved mockup "更早"): the black base is a bell — a rounded dome over the card
