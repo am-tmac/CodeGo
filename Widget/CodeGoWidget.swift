@@ -1,6 +1,10 @@
+#if CODEX_WIDGET || (DEBUG && CODEGO_WIDGET_RENDER_TESTS)
 import SwiftUI
 import WidgetKit
 import AppIntents
+#if CODEGO_WIDGET_RENDER_TESTS
+@testable import CodeGo
+#endif
 
 struct DashboardEntity: AppEntity {
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "服务 / 账号"
@@ -32,6 +36,9 @@ struct DashboardColumn {
     let balance: DeepSeekSnapshot?
     var openCodeGo: OpenCodeGoSnapshot? = nil
     var commandCode: CommandCodeSnapshot? = nil
+    var openRouter: OpenRouterSnapshot? = nil
+    var ollamaCloud: OllamaCloudSnapshot? = nil
+    var qoder: QoderSnapshot? = nil
     let antigravity: AntigravitySnapshot?
     let claude: ClaudeSnapshot?
     let tokensci: TokensCISnapshot?
@@ -43,6 +50,9 @@ struct DashboardColumn {
         switch provider {
         case "opencodego": return openCodeGo?.updatedAt
         case "commandcode": return commandCode?.updatedAt
+        case "openrouter": return openRouter?.updatedAt
+        case "ollamacloud": return ollamaCloud?.updatedAt
+        case "qoder": return qoder?.updatedAt
         case "deepseek": return balance?.updatedAt
         case "antigravity": return antigravity?.updatedAt
         case "claude": return claude?.updatedAt
@@ -53,7 +63,7 @@ struct DashboardColumn {
     static func load(_ id: String?, defaultProvider: String = "codex", accounts: [DashboardAccount] = DashboardStore.accounts()) -> Self {
         let row = accounts.first { $0.id == id }
         let provider = row?.provider ?? defaultProvider
-        let attempt = id.map { WidgetRefreshAttempt.load(provider == "tokensci" ? "tokensci:" + $0 : $0) }
+        let attempt = id.map { WidgetRefreshAttempt.load(WidgetRefreshAttempt.attemptID($0, provider: provider)) }
         let needsAppRefresh = provider == "claude" && attempt?.requiresAppRefresh == true
         // Only the slot's own provider cache is read; the others would always be misses.
         return Self(id: id, provider: provider, title: row?.title ?? "未选择 / 账号已移除",
@@ -61,10 +71,16 @@ struct DashboardColumn {
                     balance: provider == "deepseek" ? id.flatMap { DeepSeekStore.snapshot($0) } : nil,
                     openCodeGo: provider == "opencodego" ? id.flatMap { OpenCodeGoStore.snapshot($0) } : nil,
                     commandCode: provider == "commandcode" ? id.flatMap { CommandCodeStore.snapshot($0) } : nil,
+                    openRouter: provider == "openrouter" ? id.flatMap { OpenRouterStore.snapshot($0) } : nil,
+                    ollamaCloud: provider == "ollamacloud" ? id.flatMap { OllamaCloudStore.snapshot($0) } : nil,
+                    qoder: provider == "qoder" ? id.flatMap { QoderStore.snapshot($0) } : nil,
                     antigravity: provider == "antigravity" && id != nil ? AntigravityStore.snapshot() : nil,
                     claude: provider == "claude" ? ClaudeStore.snapshot() : nil,
                     tokensci: provider == "tokensci" ? id.flatMap { TokensCIStore.snapshot($0) } : nil,
-                    canRefresh: provider != "tokensci" && !needsAppRefresh && (id.map { DashboardStore.canRefreshAnyProvider($0) } ?? false),
+                    // Every provider with a credential in the permitted group can refresh here,
+                    // including tokens.ci (build 50). Claude still waits for the App when only
+                    // the App may rotate its token.
+                    canRefresh: !needsAppRefresh && (id.map { DashboardStore.canRefreshAnyProvider($0) } ?? false),
                     failed: attempt?.failed ?? false, refreshing: attempt?.isRefreshing(at: Date()) ?? false,
                     needsAppRefresh: needsAppRefresh)
     }
@@ -95,58 +111,122 @@ struct UsageProvider: AppIntentTimelineProvider {
         SharedStorage.recordWidgetDiagnostics()
         let cached = entry(configuration)
         let columns = context.family == .systemMedium ? [cached.left, cached.right] : [cached.left]
-        // Both columns refresh concurrently (build 28); each keeps its own lease, throttle and cache.
-        let targets = RefreshTargets.unique(columns.map { $0.id }).compactMap { id -> (String, String)? in
-            guard let column = columns.first(where: { $0.id == id }), column.canRefresh, !column.refreshing else { return nil }
-            guard WidgetRefreshAttempt.timelineShouldFetch(updatedAt: column.updatedAt) else { return nil }
-            return (id, column.provider)
+        // Both columns are refreshed through one coordinator: authorization, the persisted
+        // throttle/backoff and cache freshness are decided once, then each permitted account is
+        // fetched concurrently with `widget: true`. Failures keep the last good cache.
+        let slots = columns.compactMap { column in
+            column.id.map { WidgetRefreshSlot(id: $0, provider: column.provider, updatedAt: column.updatedAt) }
         }
-        await withTaskGroup(of: Void.self) { group in
-            for (id, provider) in targets {
-                group.addTask {
-                    // Failures keep the last successful cache and the persisted failure flag.
-                    _ = try? await WidgetRefresh.one(id: id, provider: provider)
-                }
-            }
-        }
-        return Timeline(entries: [targets.isEmpty ? cached : entry(configuration)], policy: .after(Date().addingTimeInterval(900)))
+        let refreshed = await WidgetRefreshCoordinator().perform(slots, respectFreshness: true)
+        // WidgetKit may throttle timelines; this path never throws, never shows an alert, and
+        // simply re-renders the cached entry when nothing could be fetched.
+        return Timeline(entries: [refreshed.isEmpty ? cached : entry(configuration)], policy: .after(Date().addingTimeInterval(900)))
     }
 }
 struct DashboardWidgetView: View {
+#if CODEGO_WIDGET_RENDER_TESTS
+    // WidgetKit owns a read-only environment value. Simulator render tests supply that family.
+    var family: WidgetFamily = .systemSmall
+#else
     @Environment(\.widgetFamily) var family
+#endif
     @Environment(\.colorScheme) var scheme
     let entry: UsageEntry
-    var palette: ThemePalette { .resolve(entry.theme, scheme: scheme) }
-    @ViewBuilder func column(_ value: DashboardColumn) -> some View {
-        if value.provider == "deepseek" {
-            if family == .systemSmall {
-                DeepSeekStackedCardView(snapshot: value.balance, failed: value.failed, cacheOnly: !value.canRefresh)
-            } else {
-                DeepSeekCompactView(snapshot: value.balance, label: value.title, failed: value.failed,
-                                    cacheOnly: !value.canRefresh, palette: palette)
-            }
-        } else if value.provider == "opencodego" || value.provider == "commandcode" {
-            APIUsageCompactView(title: value.provider == "opencodego" ? "OpenCode Go" : "Command Code",
-                snapshot: value.openCodeGo.map { ProviderCardData($0) } ?? value.commandCode.map { ProviderCardData($0) },
-                command: value.provider == "commandcode", failed: value.failed, cacheOnly: !value.canRefresh,
-                palette: palette, display: entry.display)
-        } else if value.provider == "antigravity" {
-            AntigravityWidgetView(snapshot: value.antigravity, palette: palette, display: entry.display)
-        } else if value.provider == "claude" {
-            ClaudeCompactView(snapshot: value.claude, failed: value.failed, cacheOnly: !value.canRefresh, palette: palette,
-                              display: entry.display, needsAppRefresh: value.needsAppRefresh)
-        } else if value.provider == "tokensci" {
-            TokensCICompactView(snapshot: value.tokensci, palette: palette)
+    var palette: ThemePalette { .widget(scheme: entry.theme == .light ? .light : (entry.theme == .dark ? .dark : scheme)) }
+    /// DeepSeek keeps its own card (stacked on the small family, compact on the medium one);
+    /// the Nowdex-style readings card is for the usage/subscription providers only.
+    @ViewBuilder func deepSeekCard(_ value: DashboardColumn) -> some View {
+        if family == .systemSmall {
+            DeepSeekStackedCardView(snapshot: value.balance, failed: value.failed, cacheOnly: !value.canRefresh)
         } else {
-            CompactUsageView(snapshot: value.usage, failed: value.failed, refreshing: value.refreshing,
-                             sharingUnavailable: !SharedStorage.cacheSharingAvailable, cacheOnly: !value.canRefresh,
-                             palette: palette, display: entry.display)
+            DeepSeekCompactView(snapshot: value.balance, label: value.title, failed: value.failed,
+                                cacheOnly: !value.canRefresh, palette: palette)
         }
     }
+    func column(_ value: DashboardColumn) -> AnyView {
+        if value.provider == "deepseek" { return AnyView(deepSeekCard(value)) }
+        var readings: [WidgetReading] = []
+        var plan: String?
+        var footer: String?
+        var data: ProviderCardData?
+        let tint = MeterTint(rawValue: value.provider) ?? .codex
+        let titles = ["codex": "Codex", "claude": "Claude", "deepseek": "DeepSeek", "opencodego": "OpenCode Go",
+                      "commandcode": "Command Code", "openrouter": "OpenRouter", "ollamacloud": "Ollama Cloud",
+                      "qoder": "Qoder", "antigravity": "Antigravity", "tokensci": "tokens.ci"]
+        let logos = ["codex": "LogoOpenAI", "claude": "LogoClaude", "deepseek": "LogoDeepSeek",
+                     "opencodego": "LogoOpenCodeGo", "commandcode": "LogoCommandCode", "antigravity": "LogoAntigravity"]
+        switch value.provider {
+        case "codex":
+            readings = [("5h", value.usage?.usage.rateLimit?.primaryWindow), ("7d", value.usage?.usage.rateLimit?.secondaryWindow)].map {
+                WidgetReading(title: $0.0, remaining: $0.1?.remaining, reset: $0.1?.resetDate)
+            }
+            footer = "重置积分 " + (value.usage?.usage.resetCreditsText(now: entry.date) ?? "—")
+        case "claude":
+            readings = [("5h", value.claude?.fiveHour), ("7d", value.claude?.sevenDay)].map {
+                WidgetReading(title: $0.0, remaining: $0.1?.remaining, reset: $0.1?.reset)
+            }
+        case "opencodego":
+            data = value.openCodeGo.map { ProviderCardData($0, plan: value.id.map { ProviderPreferences.openCodeGoPlan(accountID: $0) } ?? .go) }
+        case "commandcode": data = value.commandCode.map { ProviderCardData($0) }
+        case "openrouter": data = value.openRouter.map { ProviderCardData($0) }
+        case "ollamacloud": data = value.ollamaCloud.map { ProviderCardData($0) }
+        case "qoder": data = value.qoder.map { ProviderCardData($0) }
+        case "antigravity":
+            let total = QuotaSummary.tightest((value.antigravity?.usage.quotas ?? []).map { .init(label: "模型额度", remaining: $0.remaining, reset: $0.reset) })
+            readings = [WidgetReading(title: "总用量", remaining: total?.remaining, reset: total?.reset)]
+            plan = value.antigravity?.usage.tier
+        case "deepseek":
+            readings = (value.balance?.balance.balanceInfos.prefix(2) ?? []).map {
+                WidgetReading(title: $0.currency + " 余额", value: NSDecimalNumber(decimal: $0.total).stringValue)
+            }
+            if readings.isEmpty { readings = [WidgetReading(title: "余额", value: "—")] }
+            footer = value.balance.map { $0.balance.isAvailable ? "API 可用余额" : "API 余额不可用" }
+        case "tokensci":
+            readings = [WidgetReading(title: value.tokensci?.periodLabel ?? "今日 Tokens", value: value.tokensci.map { TokensCIFormat.compact($0.todayTokens) } ?? "—"),
+                        WidgetReading(title: "费用", value: value.tokensci.map { TokensCIFormat.money($0.todayCost) } ?? "—")]
+        default: break
+        }
+        if let data {
+            readings = data.rows.map { row in
+                WidgetReading(title: row.label, remaining: row.window?.remaining, reset: row.reset ?? row.window?.resetDate,
+                              value: row.window == nil ? (row.money ?? row.detail ?? "—") : nil,
+                              detail: row.window == nil ? nil : row.money.map { row.moneyPrefix + $0 })
+            }
+            plan = value.provider == "opencodego"
+                ? (value.id.map { ProviderPreferences.openCodeGoPlan(accountID: $0) } ?? .go).displayName : data.plan
+            footer = [data.grantNote, data.purchased.map { "加购 " + $0 }].compactMap { $0 }.joined(separator: " · ")
+        }
+        if readings.isEmpty {
+            let labels: [String]
+            switch value.provider {
+            case "openrouter": labels = ["剩余额度", "本 Key 限额", "免费档"]
+            case "ollamacloud": labels = ["余额"]
+            case "qoder": labels = ["每周", "每月"]
+            default: labels = ["5 小时", "每周", "每月"]
+            }
+            readings = labels.map { WidgetReading(title: $0) }
+        }
+        let status: String?
+        if value.needsAppRefresh {
+            status = value.updatedAt == nil ? "无缓存 · 打开 App 更新授权" : "仅缓存 · 打开 App 更新授权"
+        } else if !value.canRefresh {
+            status = value.updatedAt == nil ? "无缓存 · 组件无刷新授权，打开 App" : "仅缓存 · 组件无刷新授权，打开 App"
+        } else if value.refreshing { status = "刷新中…" }
+        else if value.failed { status = "刷新失败 · 保留缓存" }
+        else if value.updatedAt == nil { status = "未授权/无数据 · 打开 App" }
+        else if value.provider == "codex", value.usage?.isStale(at: entry.date) == true { status = "数据已过期" }
+        else if let updatedAt = value.updatedAt, value.provider != "tokensci", value.provider != "codex",
+                entry.date.timeIntervalSince(updatedAt) > 1800 || entry.date < updatedAt { status = "数据已过期" }
+        else { status = nil }
+        return AnyView(NowdexWidgetCard(title: titles[value.provider] ?? value.provider, logo: logos[value.provider], symbol: "circle.hexagongrid.fill",
+                                readings: readings, tint: tint, updatedAt: value.updatedAt, now: entry.date,
+                                medium: isMedium, reservesRefresh: !isMedium || value.id == entry.right.id,
+                                palette: palette, display: entry.display, plan: plan, status: status, footer: footer))
+    }
     var isMedium: Bool { family == .systemMedium }
-    /// Only `.systemSmall` + DeepSeek uses the stacked card; the medium family and every Codex
-    /// slot keep the build-14 layout.
-    var stackedCard: Bool { family == .systemSmall && entry.left.provider == "deepseek" }
+    /// The DeepSeek small widget is a full-bleed black stack that paints its own card, so the
+    /// shared 14pt inset would double-pad it.
+    var stackedCard: Bool { !isMedium && entry.left.provider == "deepseek" }
     /// Exactly one control per widget, pinned to the top-right corner of both families.
     /// The medium control carries both slots and refreshes them with a single tap; the small
     /// widget passes no right slot, so it never refreshes an account it does not display.
@@ -154,7 +234,7 @@ struct DashboardWidgetView: View {
     var hasConfiguredAccount: Bool { isMedium ? (entry.left.id != nil || entry.right.id != nil) : entry.left.id != nil }
     /// A Claude slot awaiting App renewal is excluded from the tap (its column's `canRefresh` is
     /// already false and the intent filters it), but it must not disable the other slot: the
-    /// control only falls back to opening the App when no displayed slot can refresh here.
+    /// control reloads cache when no displayed slot can refresh here.
     var slotCanRefresh: Bool { isMedium ? (entry.left.canRefresh || entry.right.canRefresh) : entry.left.canRefresh }
     var needsAppRefresh: Bool { !slotCanRefresh && (entry.left.needsAppRefresh || (isMedium && entry.right.needsAppRefresh)) }
     var refreshControl: some View {
@@ -163,32 +243,22 @@ struct DashboardWidgetView: View {
                           palette: palette, label: isMedium ? "刷新组件内的账号" : "刷新该账号",
                           inset: stackedCard ? 4 : 0, topInset: 0,
                           bottomInset: stackedCard ? 4 : 0, bottomAligned: stackedCard)
-            .accessibilityHint(needsAppRefresh ? "打开 App 更新授权" : "")
+            .accessibilityHint(needsAppRefresh ? "需要在 App 中更新授权" : "")
     }
     var body: some View {
         Group {
             if stackedCard {
-                // The stack paints the whole widget, margins are off in the configuration and the
-                // refresh control moves into the black layer so it cannot cover the balance.
                 column(entry.left)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .top, spacing: 14) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            column(entry.left)
-                        }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        if isMedium {
-                            Rectangle().fill(palette.divider).frame(width: 1)
-                            VStack(alignment: .leading, spacing: 4) {
-                                column(entry.right)
-                            }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        }
+                HStack(alignment: .top, spacing: 14) {
+                    column(entry.left)
+                    if isMedium {
+                        Rectangle().fill(palette.divider).frame(width: 1)
+                        column(entry.right)
                     }
                 }
-                // Content margins are disabled in the configuration, so build 14's 16pt inset is
-                // applied here instead of being supplied by WidgetKit.
-                .padding(16)
+                .padding(14)
             }
         }
         .overlay(alignment: .topTrailing) {
@@ -200,7 +270,7 @@ struct DashboardWidgetRoot: View {
     @Environment(\.colorScheme) var scheme
     let entry: UsageEntry
     var body: some View {
-        let palette = ThemePalette.resolve(entry.theme, scheme: scheme)
+        let palette = ThemePalette.widget(scheme: entry.theme == .light ? .light : (entry.theme == .dark ? .dark : scheme))
         DashboardWidgetView(entry: entry)
             .environment(\.colorScheme, entry.theme == .light ? .light : (entry.theme == .dark ? .dark : scheme))
             .containerBackground(palette.background, for: .widget)
@@ -214,8 +284,7 @@ struct CodexUsageWidget: Widget {
         }.configurationDisplayName("订阅额度与 API 余额")
             .description("长按编辑组件，独立选择服务与账号；中号右上角一个刷新按钮同时刷新两栏。")
             .supportedFamilies([.systemSmall, .systemMedium])
-            // The stacked DeepSeek card is a full-bleed card stack: it draws its own 8pt/16pt
-            // insets. Every other layout re-applies build 14's 16pt margin in the view.
+            // The widget card supplies its own consistent 14pt content inset.
             .contentMarginsDisabled()
     }
 }
@@ -397,9 +466,13 @@ struct TokensCIWidgetRoot: View {
     }
 }
 
+#if !CODEGO_WIDGET_RENDER_TESTS
 @main struct CodexUsageWidgetBundle: WidgetBundle {
     var body: some Widget {
         TokensCIWidget()
         CodexUsageWidget()
     }
 }
+
+#endif
+#endif

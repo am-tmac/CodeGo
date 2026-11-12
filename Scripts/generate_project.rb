@@ -11,7 +11,8 @@ shared = Dir['Shared/*.swift']
 [[app, shared + Dir['App/*.swift']], [widget, shared + Dir['Widget/*.swift']], [tests, Dir['Tests/*.swift']]].each do |target, files|
   files.each { |file| target.source_build_phase.add_file_reference(p.main_group.new_file(file)) }
 end
-app.resources_build_phase.add_file_reference(p.main_group.new_file('App/Assets.xcassets'))
+brand_assets = p.main_group.new_file('App/Assets.xcassets')
+[app, widget].each { |target| target.resources_build_phase.add_file_reference(brand_assets) }
 app.add_dependency(widget)
 embed = app.new_copy_files_build_phase('Embed App Extensions')
 embed.dst_subfolder_spec = '13'
@@ -29,8 +30,8 @@ tests.add_dependency(app)
     s['CODEX_APP_BUNDLE_IDENTIFIER'] = 'com.personal.CodexUsage'
     s['PRODUCT_BUNDLE_IDENTIFIER'] = target == widget ? '$(CODEX_APP_BUNDLE_IDENTIFIER).Widget' : (target == app ? '$(CODEX_APP_BUNDLE_IDENTIFIER)' : '$(CODEX_APP_BUNDLE_IDENTIFIER).Tests')
     s['ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME'] = ''
-    s['CURRENT_PROJECT_VERSION'] = '43'
-    s['MARKETING_VERSION'] = '4.6'
+    s['CURRENT_PROJECT_VERSION'] = '51'
+    s['MARKETING_VERSION'] = '6.3'
     s['GENERATE_INFOPLIST_FILE'] = 'YES'
     s['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
     s['SWIFT_EMIT_LOC_STRINGS'] = 'YES'

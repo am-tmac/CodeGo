@@ -9,21 +9,18 @@ import WidgetKit
 public enum SharedStorage {
     public static var groupID: String { Bundle.main.object(forInfoDictionaryKey: "AppGroupIdentifier") as? String ?? "group.com.personal.CodexUsage" }
     static var isWidget: Bool { Bundle.main.bundleURL.pathExtension == "appex" }
-    // Resolve once per process: never switch lock/keychain domains during token rotation.
-    private static let capabilities: (routing: StorageRouting, diagnostics: StorageDiagnostics) = {
+    // Never switch lock/keychain domains during token rotation: once a group resolves it is fixed
+    // for the process. An unresolved probe (e.g. -25308 while the phone was locked when the
+    // extension started) is NOT cached forever — it is re-probed, at most every 30 s.
+    private static let capabilityResolver: KeychainCapabilityResolver = {
         let shared = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)
         let configured = Bundle.main.object(forInfoDictionaryKey: "KeychainAccessGroup") as? String
         let suffix = Bundle.main.object(forInfoDictionaryKey: "KeychainGroupIdentifier") as? String ?? "com.personal.CodexUsage.shared"
-        let baseline = KeychainProbe.probe(group: nil)
-        var probes: [String: OSStatus] = [:]
-        let group = authorizedGroup(configured: configured, actualDefaultGroup: baseline.1, suffix: suffix) { candidate in
-            let status = KeychainProbe.probe(group: candidate).0
-            probes[candidate] = status
-            return status == errSecSuccess
-        }
-        return (StorageRouting(sharedURL: shared, authorizedGroup: group, isWidget: isWidget),
-                StorageDiagnostics(configuredAppGroup: groupID, configuredKeychainGroup: configured, containerAvailable: shared != nil, defaultProbeStatus: baseline.0, observedDefaultGroup: baseline.1, probes: probes, selectedGroup: group, isWidget: isWidget))
+        return KeychainCapabilityResolver(sharedURL: shared, appGroup: groupID, configuredKeychainGroup: configured,
+                                          suffix: suffix, isWidget: isWidget, retryInterval: 30,
+                                          probe: { KeychainProbe.probe(group: $0) })
     }()
+    private static var capabilities: KeychainCapabilityResolver.Capabilities { capabilityResolver.current }
     // App keeps its original default queries; Widget pins the exact verified group.
     // The service/account namespace is unchanged. No credential migration or duplication.
     static var routing: StorageRouting {
@@ -151,13 +148,28 @@ public enum SharedStorage {
     }
     static func recordWidgetDiagnostics() {
         guard isWidget, let url = try? container().appendingPathComponent("widget-diagnostics.json") else { return }
-        var report = diagnostics
-        report.handshakeStatus = respondToHandshake()
+        let report = widgetDiagnosticsReport(diagnostics, handshakeStatus: respondToHandshake(), at: Date())
         try? JSONEncoder().encode(report).write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    }
+    /// The stamp shown in the App is the time this report was written; the probe time is kept
+    /// separately so a stale (rate-limited or resolved) probe is visible as such.
+    static func widgetDiagnosticsReport(_ base: StorageDiagnostics, handshakeStatus: String?, at time: Date) -> StorageDiagnostics {
+        var report = base
+        report.probedAt = base.probedAt ?? base.observedAt
+        report.observedAt = time
+        report.handshakeStatus = handshakeStatus
+        return report
     }
     static var widgetDiagnosticText: String {
         guard let url = try? container().appendingPathComponent("widget-diagnostics.json"), let data = try? Data(contentsOf: url), let report = try? JSONDecoder().decode(StorageDiagnostics.self, from: data) else { return "尚无扩展诊断；扩展未运行或不能访问同一 App Group。App 的成功不证明扩展成功。" }
         return report.text
+    }
+    static var incomingIPACleaner: IncomingIPACleaner { IncomingIPACleaner(groupURL: capabilities.routing.sharedURL) }
+    static var storageDiagnosticsRoots: [StorageDiagnosticsScanner.Root] {
+        // Use the already-resolved capability URL; do not create a fallback directory
+        // or expose container UUIDs in the report. Scanning must remain read-only.
+        [.init(name: "App 数据", url: URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)),
+         .init(name: "App Group", url: capabilities.routing.sharedURL)]
     }
     static var sharingAvailable: Bool { permittedGroup != nil }
     static var sharingMessage: String { "共享未授权 · 打开 App 配置签名" }
@@ -339,11 +351,14 @@ struct StorageDiagnostics: Codable {
     let selectedGroup: String?
     let isWidget: Bool
     var observedAt = Date()
+    /// When the keychain capability probe last ran. Optional so older reports still decode.
+    var probedAt: Date? = nil
     var handshakeStatus: String? = nil
     var text: String {
         let mode = !containerAvailable ? "共享容器不可用" : "缓存共享可用 · 独立联网状态以同意开关及当前握手为准"
         return """
         \(isWidget ? "Widget" : "App") · \(observedAt.formatted(date: .abbreviated, time: .standard))
+        探针时间：\(probedAt.map { $0.formatted(date: .abbreviated, time: .standard) } ?? "未记录")\(selectedGroup == nil ? "（未解析到组时每 30 秒内最多重探一次）" : "（已解析，本进程内固定）")
         App Group 配置：\(configuredAppGroup)
         容器获取：\(containerAvailable ? "成功" : "失败 (nil)")
         Keychain 配置：\(configuredKeychainGroup ?? "未配置")
@@ -544,6 +559,11 @@ struct WidgetRefreshAttempt: Codable {
     static func timelineShouldFetch(updatedAt: Date?, now: Date = Date()) -> Bool {
         guard let updatedAt, updatedAt <= now else { return true }
         return now.timeIntervalSince(updatedAt) >= timelineFreshness
+    }
+    /// tokens.ci accounts are keyed by username across the store, the lease and the throttle;
+    /// every other provider uses the opaque account id unchanged.
+    static func attemptID(_ id: String, provider: String) -> String {
+        provider == "tokensci" ? "tokensci:" + id : id
     }
     static func url(_ account: String) throws -> URL { try SharedStorage.snapshotURL(account).appendingPathExtension("attempt") }
     static func load(_ account: String) -> Self {

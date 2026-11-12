@@ -1,0 +1,344 @@
+[
+  {
+    "file": "App/Assets.xcassets/LogoAntigravity.imageset/LogoAntigravity.png",
+    "size": [
+      24,
+      24
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      1,
+      24,
+      23
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoAntigravity.imageset/LogoAntigravity@2x.png",
+    "size": [
+      48,
+      48
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      2,
+      48,
+      47
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoAntigravity.imageset/LogoAntigravity@3x.png",
+    "size": [
+      72,
+      72
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      3,
+      72,
+      70
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoClaude.imageset/LogoClaude.png",
+    "size": [
+      24,
+      24
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      0,
+      24,
+      24
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoClaude.imageset/LogoClaude@2x.png",
+    "size": [
+      48,
+      48
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      0,
+      48,
+      48
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoClaude.imageset/LogoClaude@3x.png",
+    "size": [
+      72,
+      72
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      0,
+      72,
+      72
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoCommandCode.imageset/LogoCommandCode.png",
+    "size": [
+      64,
+      64
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      8,
+      8,
+      57,
+      57
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoCommandCode.imageset/LogoCommandCode@2x.png",
+    "size": [
+      128,
+      128
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      16,
+      16,
+      113,
+      113
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoCommandCode.imageset/LogoCommandCode@3x.png",
+    "size": [
+      192,
+      192
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      24,
+      24,
+      169,
+      169
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoDeepSeek.imageset/LogoDeepSeek.png",
+    "size": [
+      24,
+      24
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      3,
+      24,
+      21
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoDeepSeek.imageset/LogoDeepSeek@2x.png",
+    "size": [
+      48,
+      48
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      6,
+      48,
+      42
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoDeepSeek.imageset/LogoDeepSeek@3x.png",
+    "size": [
+      72,
+      72
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      9,
+      72,
+      62
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoOpenAI.imageset/LogoOpenAI.png",
+    "size": [
+      24,
+      24
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      0,
+      24,
+      24
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoOpenAI.imageset/LogoOpenAI@2x.png",
+    "size": [
+      48,
+      48
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      0,
+      48,
+      48
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoOpenAI.imageset/LogoOpenAI@3x.png",
+    "size": [
+      72,
+      72
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      0,
+      0,
+      72,
+      72
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoOpenCodeGo.imageset/LogoOpenCodeGo.png",
+    "size": [
+      64,
+      64
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      13,
+      8,
+      52,
+      57
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoOpenCodeGo.imageset/LogoOpenCodeGo@2x.png",
+    "size": [
+      128,
+      128
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      26,
+      16,
+      103,
+      113
+    ]
+  },
+  {
+    "file": "App/Assets.xcassets/LogoOpenCodeGo.imageset/LogoOpenCodeGo@3x.png",
+    "size": [
+      192,
+      192
+    ],
+    "corner_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "alpha_bounds": [
+      39,
+      24,
+      154,
+      169
+    ]
+  }
+]

@@ -7,16 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AAA051000000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D6D0ED7AD91711F0F63CA6B4 /* Assets.xcassets */; };
 		00478C36D86329DA28E586A4 /* UsageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAEE02696E0B9E04DAC4F70B /* UsageViews.swift */; };
 		0442AD11680A7CE7E8C9C34F /* Antigravity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33456D0E9C23C585D3E4BCBA /* Antigravity.swift */; };
+		0D1533AE1ACAFE3C31D8D096 /* OAuthLoopback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B57C02BCA117F116E5350B0 /* OAuthLoopback.swift */; };
 		0D39B3DC0755976846686274 /* UsageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0648B259B2E5AC103950F9D8 /* UsageViews.swift */; };
 		10B25C0B7980CFAB81951167 /* ProviderParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACA203CA12286A3532930AE /* ProviderParsing.swift */; };
 		1508BA9AE870EE5E55307F41 /* DeepSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 929294C8CE82485447F5804A /* DeepSeek.swift */; };
+		162AEC96FA94AD62CA56D825 /* OpenRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B7BBB4C67487903D1013B24 /* OpenRouter.swift */; };
 		176EEBE2096C840A89049621 /* StorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB7A056A23AC51A1A48014D /* StorageTests.swift */; };
 		1A4B20300BD00E37F3BB8268 /* OpenCodeGoPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B71FDE1257B14BD3B884731D /* OpenCodeGoPanel.swift */; };
 		1A8D3F85E43626C814130CD3 /* CardOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F5263D3D4B5BF06E85260F /* CardOrder.swift */; };
+		1AFD895598A8D74A61687F45 /* QoderPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F22D3B146B27DC4AE4E69FE2 /* QoderPanel.swift */; };
 		1F609C33E571A37C24AA1342 /* TokensCIPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70C99753BC98FF57862F3F7 /* TokensCIPanel.swift */; };
 		1FC4FCD57E454165B81EA4F9 /* OpenCodeGo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BD2678BEE827643E1E9127E /* OpenCodeGo.swift */; };
+		20B52549C55956B2AE788001 /* Build45ProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96DA6D28938B67E79E62DDC1 /* Build45ProviderTests.swift */; };
 		235D7BB55D1F7FE9E346B7C0 /* Claude.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93E08EC15ADD1F087EEE98F7 /* Claude.swift */; };
 		24676C44ABF28EDB620B1FF9 /* ProviderCardData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BEB474558E81BFBE548809 /* ProviderCardData.swift */; };
 		254EBF94AC088682735CEE23 /* Antigravity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33456D0E9C23C585D3E4BCBA /* Antigravity.swift */; };
@@ -30,23 +35,37 @@
 		321EA855C3E0C275829C17AC /* ExtraProviderPanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99BFBB7DC77C4557E2AFEC99 /* ExtraProviderPanels.swift */; };
 		39847F36E92C3E0853204C21 /* AuthAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F577D9F517AE9AA523A28EE2 /* AuthAPI.swift */; };
 		3BBB077663F33F1565103ABE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5F05FAA8AB62995F8E75D7F /* Foundation.framework */; };
+		3E5D1014F8B3A8B2CA7F2AA0 /* OllamaCloud.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF812C212B14ABB60074B094 /* OllamaCloud.swift */; };
+		41E15F6707BF10A0E02C0362 /* IncomingIPACleanupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67F15999FB1A2767FFBB3C0 /* IncomingIPACleanupView.swift */; };
 		4263EACC074D7FF449685565 /* TokensCIHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95956BCCD11C2C7E5E568CD /* TokensCIHistory.swift */; };
 		4BDC7DE3610CDA11CA606FA2 /* AuthAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3DCF62F3AF0B9E318E178C /* AuthAPI.swift */; };
 		4D3054D5B0144856B2FE05AF /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95667A8A372765AE0F8B8BDE /* Storage.swift */; };
 		4E6D2D178F8E50DADD73C2EA /* ConnectViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E667CD18B332B5450FEDAA /* ConnectViews.swift */; };
+		55143D0E927153A380275959 /* OAuthLoopback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B57C02BCA117F116E5350B0 /* OAuthLoopback.swift */; };
 		55DE942DF0CDA35F3E8D7342 /* OpenCodeGo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BD2678BEE827643E1E9127E /* OpenCodeGo.swift */; };
+		576122C44542101E8C212F77 /* OllamaCloud.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF812C212B14ABB60074B094 /* OllamaCloud.swift */; };
 		5C8553A8CCC601D727E6D8F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5F05FAA8AB62995F8E75D7F /* Foundation.framework */; };
 		5C997457C6A1F8DD280C421E /* Build42ProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5E75F582FC9FC3B7F79A80 /* Build42ProviderTests.swift */; };
+		5CC9C199D814279AF344F476 /* WidgetRefreshLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = E464BDEA5EE79FB2D5146E97 /* WidgetRefreshLogic.swift */; };
 		67B75D7E43C4B513A4EA1D1E /* TokensCIHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95956BCCD11C2C7E5E568CD /* TokensCIHistory.swift */; };
 		6B77E310F08B55BD49ED82C7 /* CardOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F5263D3D4B5BF06E85260F /* CardOrder.swift */; };
+		6C7C34DEFCFFE6470D9DEC4B /* CacheMaintenanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC210524609674B010ABB19D /* CacheMaintenanceTests.swift */; };
+		6D2A9D948A2F2BEB50DED0BA /* IncomingIPACleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5AE43806BAE1D8C78D9E165 /* IncomingIPACleaner.swift */; };
 		6E8E758810BEE6EBAD3E5727 /* TokensCIAnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8506ED341777CDC19D0EDFFE /* TokensCIAnalyticsView.swift */; };
+		8034417EC651C9E34C3A2737 /* StorageDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E971676FD51FE7CFE79507 /* StorageDiagnosticsView.swift */; };
 		832D69D3A24C473D04E5D11B /* APIUsageAccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63D1619D0D63997836D8351D /* APIUsageAccountCard.swift */; };
+		83AE3DF1480D49EB98CB311C /* IncomingIPACleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5AE43806BAE1D8C78D9E165 /* IncomingIPACleaner.swift */; };
+		84A34D41E25D210D0CE3733C /* CacheMaintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE538B5FB62C708FC23081E /* CacheMaintenance.swift */; };
 		85A34DDEA4E4B2E19FF4FFE0 /* CommandCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11F6E231FB70E574AAD4D59 /* CommandCode.swift */; };
 		8764F309F76AD1953284E475 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D6D0ED7AD91711F0F63CA6B4 /* Assets.xcassets */; };
 		8941A9F9AA9081E155C32B0E /* DeepSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = C431846C75F38BDB4590484C /* DeepSeek.swift */; };
+		8AFC256AA76321614927D1F4 /* KeychainCapabilityResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F63D2537A410386E23C504 /* KeychainCapabilityResolver.swift */; };
 		8E6BBF3B231086C2552CDF3E /* ProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1542293685BE183E36A0F586 /* ProtocolTests.swift */; };
 		8F22B810430A68A596CC729A /* DeepSeekPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B47ECDA55A0BF4542FC9D84 /* DeepSeekPanel.swift */; };
+		990BD99AE7F6299379224DD4 /* KeychainCapabilityResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F63D2537A410386E23C504 /* KeychainCapabilityResolver.swift */; };
 		9EB9DCACD6E5CA8CD257C59E /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE635B733CCD965A35FB792 /* Models.swift */; };
+		A23C196D71C705B8B9BAB07A /* StorageDiagnosticsScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47038547CA2B061BC4672883 /* StorageDiagnosticsScanner.swift */; };
+		A73DB0CBC5CC195E7E51B76F /* OllamaCloudPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139282E87438EEDEF76EC091 /* OllamaCloudPanel.swift */; };
 		A746F52FFCE4E6735F174638 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902612FF6B38D7C8C4B207A4 /* Models.swift */; };
 		AF79FE94DB26F595E458109C /* CodexResetCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563B2DA590EFBD1B44E72ADF /* CodexResetCredits.swift */; };
 		B2D74EB8BD0B3A0A7E088DA4 /* DashboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22744EF43CFCA5066509FC3D /* DashboardStore.swift */; };
@@ -55,13 +74,28 @@
 		C12527935E17C54AFA1686C8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5F05FAA8AB62995F8E75D7F /* Foundation.framework */; };
 		C1B33F0901944569BE19E929 /* CommandCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11F6E231FB70E574AAD4D59 /* CommandCode.swift */; };
 		C32F6A062C8DB61B53D7BEED /* ProviderCardData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BEB474558E81BFBE548809 /* ProviderCardData.swift */; };
+		C34B66E95D3B0624703C3089 /* Build45OAuthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22F869D0CF75364880A32D /* Build45OAuthTests.swift */; };
 		C3E620FA54E9A07CA0081255 /* CodeGoWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 9A042239D9C1457305BA9551 /* CodeGoWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D43C83D5A2DB14FD9A5CDB09 /* ProviderPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB83589215CF6EEDA96AE94F /* ProviderPreferences.swift */; };
+		D74C331443834F84EDC88791 /* CacheMaintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE538B5FB62C708FC23081E /* CacheMaintenance.swift */; };
+		D75AA4274DC54E7691E00A39 /* WidgetRefreshLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = E464BDEA5EE79FB2D5146E97 /* WidgetRefreshLogic.swift */; };
 		DA32B8DB796CE80906494B42 /* CodeGoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7E958362A0EF7F09A7D22A /* CodeGoApp.swift */; };
 		E0BCE1F6D47FBA70AC331AA8 /* CodexResetCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563B2DA590EFBD1B44E72ADF /* CodexResetCredits.swift */; };
+		E15ABA6465A9DDBECDF2C9C9 /* Qoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9493D270193824220D32FA20 /* Qoder.swift */; };
 		E2525EBEB99C1EBBA25BDC66 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48435CDF0B62ED2ADB4F3084 /* Storage.swift */; };
+		E49D11AA52DC3F94DB677178 /* Qoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9493D270193824220D32FA20 /* Qoder.swift */; };
+		E514F47C2CF8EAA548EBBBCF /* StorageDiagnosticsScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47038547CA2B061BC4672883 /* StorageDiagnosticsScanner.swift */; };
 		EB30FC5B706A9F47EDFA9F74 /* DashboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8EA501153531B2CCF3BA7CB /* DashboardStore.swift */; };
 		EBDB5C8A3D8C8AE677525E5B /* TokensCI.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF189C795DDC921FE033C5E1 /* TokensCI.swift */; };
+		EE10EFFD94446F32FEC36E9B /* WidgetRefreshLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE73771FBCDE4860F2E323B /* WidgetRefreshLogicTests.swift */; };
+		F0C8914F676D95AC90C3FE3B /* OpenRouterPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE25537FB193265CDE4BE34A /* OpenRouterPanel.swift */; };
+		F3CF41542A44D1842782733A /* KeychainCapabilityResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FFF92C501AFC20CEE737EE4 /* KeychainCapabilityResolverTests.swift */; };
+		F429B050AF977CFF67B681E2 /* CacheSettingsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FABD26D6C295896359B6C1BD /* CacheSettingsCard.swift */; };
+		F498DE225DE255375B822708 /* ProviderPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB83589215CF6EEDA96AE94F /* ProviderPreferences.swift */; };
 		F70770D9DA0C29E0ABDC356B /* UsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69EE60B5D8B8A2384FCDA1B9 /* UsageTests.swift */; };
+		FB26CCEB6169A04039AA9A82 /* OpenRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B7BBB4C67487903D1013B24 /* OpenRouter.swift */; };
+		A05000000000000000000001 /* WidgetRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05000000000000000000003 /* WidgetRenderTests.swift */; };
+		A05000000000000000000002 /* CodeGoWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B42FBFB7A029AABBD0763F3 /* CodeGoWidget.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,16 +134,24 @@
 		0ACA203CA12286A3532930AE /* ProviderParsing.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProviderParsing.swift; path = Shared/ProviderParsing.swift; sourceTree = "<group>"; };
 		0B42FBFB7A029AABBD0763F3 /* CodeGoWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CodeGoWidget.swift; path = Widget/CodeGoWidget.swift; sourceTree = "<group>"; };
 		0D3DCF62F3AF0B9E318E178C /* AuthAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AuthAPI.swift; path = Shared/AuthAPI.swift; sourceTree = "<group>"; };
+		139282E87438EEDEF76EC091 /* OllamaCloudPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OllamaCloudPanel.swift; path = App/OllamaCloudPanel.swift; sourceTree = "<group>"; };
 		1542293685BE183E36A0F586 /* ProtocolTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProtocolTests.swift; path = Tests/ProtocolTests.swift; sourceTree = "<group>"; };
+		15E971676FD51FE7CFE79507 /* StorageDiagnosticsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StorageDiagnosticsView.swift; path = App/StorageDiagnosticsView.swift; sourceTree = "<group>"; };
 		1C8DD105E862C1C67ED0BBCA /* CodeGoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CodeGoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		22744EF43CFCA5066509FC3D /* DashboardStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DashboardStore.swift; path = Shared/DashboardStore.swift; sourceTree = "<group>"; };
+		2AE73771FBCDE4860F2E323B /* WidgetRefreshLogicTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WidgetRefreshLogicTests.swift; path = Tests/WidgetRefreshLogicTests.swift; sourceTree = "<group>"; };
+		2FFF92C501AFC20CEE737EE4 /* KeychainCapabilityResolverTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = KeychainCapabilityResolverTests.swift; path = Tests/KeychainCapabilityResolverTests.swift; sourceTree = "<group>"; };
 		33456D0E9C23C585D3E4BCBA /* Antigravity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Antigravity.swift; path = Shared/Antigravity.swift; sourceTree = "<group>"; };
+		3C22F869D0CF75364880A32D /* Build45OAuthTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Build45OAuthTests.swift; path = Tests/Build45OAuthTests.swift; sourceTree = "<group>"; };
+		45F63D2537A410386E23C504 /* KeychainCapabilityResolver.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = KeychainCapabilityResolver.swift; path = Shared/KeychainCapabilityResolver.swift; sourceTree = "<group>"; };
+		47038547CA2B061BC4672883 /* StorageDiagnosticsScanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StorageDiagnosticsScanner.swift; path = Shared/StorageDiagnosticsScanner.swift; sourceTree = "<group>"; };
 		47BEB474558E81BFBE548809 /* ProviderCardData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProviderCardData.swift; path = Shared/ProviderCardData.swift; sourceTree = "<group>"; };
 		48435CDF0B62ED2ADB4F3084 /* Storage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Storage.swift; path = Shared/Storage.swift; sourceTree = "<group>"; };
 		4D0AEF082D7618AB0F15D084 /* AuthTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AuthTests.swift; path = Tests/AuthTests.swift; sourceTree = "<group>"; };
 		563B2DA590EFBD1B44E72ADF /* CodexResetCredits.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CodexResetCredits.swift; path = Shared/CodexResetCredits.swift; sourceTree = "<group>"; };
 		59DBCD52896F97F82669D636 /* CommandCodePanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CommandCodePanel.swift; path = App/CommandCodePanel.swift; sourceTree = "<group>"; };
 		5B47ECDA55A0BF4542FC9D84 /* DeepSeekPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DeepSeekPanel.swift; path = App/DeepSeekPanel.swift; sourceTree = "<group>"; };
+		5B57C02BCA117F116E5350B0 /* OAuthLoopback.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OAuthLoopback.swift; path = Shared/OAuthLoopback.swift; sourceTree = "<group>"; };
 		5BD2678BEE827643E1E9127E /* OpenCodeGo.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OpenCodeGo.swift; path = Shared/OpenCodeGo.swift; sourceTree = "<group>"; };
 		63D1619D0D63997836D8351D /* APIUsageAccountCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = APIUsageAccountCard.swift; path = App/APIUsageAccountCard.swift; sourceTree = "<group>"; };
 		69EE60B5D8B8A2384FCDA1B9 /* UsageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UsageTests.swift; path = Tests/UsageTests.swift; sourceTree = "<group>"; };
@@ -117,11 +159,15 @@
 		82F33AC40E2669B526E78F79 /* Build43Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Build43Tests.swift; path = Tests/Build43Tests.swift; sourceTree = "<group>"; };
 		8506ED341777CDC19D0EDFFE /* TokensCIAnalyticsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TokensCIAnalyticsView.swift; path = App/TokensCIAnalyticsView.swift; sourceTree = "<group>"; };
 		8A5E75F582FC9FC3B7F79A80 /* Build42ProviderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Build42ProviderTests.swift; path = Tests/Build42ProviderTests.swift; sourceTree = "<group>"; };
+		8AE538B5FB62C708FC23081E /* CacheMaintenance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CacheMaintenance.swift; path = Shared/CacheMaintenance.swift; sourceTree = "<group>"; };
+		8B7BBB4C67487903D1013B24 /* OpenRouter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OpenRouter.swift; path = Shared/OpenRouter.swift; sourceTree = "<group>"; };
 		902612FF6B38D7C8C4B207A4 /* Models.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Models.swift; path = Shared/Models.swift; sourceTree = "<group>"; };
 		90CB4B875528CAC5F08F7D38 /* ClaudePanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ClaudePanel.swift; path = App/ClaudePanel.swift; sourceTree = "<group>"; };
 		929294C8CE82485447F5804A /* DeepSeek.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DeepSeek.swift; path = Shared/DeepSeek.swift; sourceTree = "<group>"; };
 		93E08EC15ADD1F087EEE98F7 /* Claude.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Claude.swift; path = Shared/Claude.swift; sourceTree = "<group>"; };
+		9493D270193824220D32FA20 /* Qoder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Qoder.swift; path = Shared/Qoder.swift; sourceTree = "<group>"; };
 		95667A8A372765AE0F8B8BDE /* Storage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Storage.swift; path = Shared/Storage.swift; sourceTree = "<group>"; };
+		96DA6D28938B67E79E62DDC1 /* Build45ProviderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Build45ProviderTests.swift; path = Tests/Build45ProviderTests.swift; sourceTree = "<group>"; };
 		99BFBB7DC77C4557E2AFEC99 /* ExtraProviderPanels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExtraProviderPanels.swift; path = App/ExtraProviderPanels.swift; sourceTree = "<group>"; };
 		9A042239D9C1457305BA9551 /* CodeGoWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CodeGoWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B71FDE1257B14BD3B884731D /* OpenCodeGoPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OpenCodeGoPanel.swift; path = App/OpenCodeGoPanel.swift; sourceTree = "<group>"; };
@@ -134,14 +180,24 @@
 		D11F6E231FB70E574AAD4D59 /* CommandCode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CommandCode.swift; path = Shared/CommandCode.swift; sourceTree = "<group>"; };
 		D2E667CD18B332B5450FEDAA /* ConnectViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ConnectViews.swift; path = App/ConnectViews.swift; sourceTree = "<group>"; };
 		D2F5263D3D4B5BF06E85260F /* CardOrder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CardOrder.swift; path = Shared/CardOrder.swift; sourceTree = "<group>"; };
+		D67F15999FB1A2767FFBB3C0 /* IncomingIPACleanupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IncomingIPACleanupView.swift; path = App/IncomingIPACleanupView.swift; sourceTree = "<group>"; };
 		D6D0ED7AD91711F0F63CA6B4 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = App/Assets.xcassets; sourceTree = "<group>"; };
 		DC7E958362A0EF7F09A7D22A /* CodeGoApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CodeGoApp.swift; path = App/CodeGoApp.swift; sourceTree = "<group>"; };
 		DDE635B733CCD965A35FB792 /* Models.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Models.swift; path = Shared/Models.swift; sourceTree = "<group>"; };
 		DF189C795DDC921FE033C5E1 /* TokensCI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TokensCI.swift; path = Shared/TokensCI.swift; sourceTree = "<group>"; };
+		E464BDEA5EE79FB2D5146E97 /* WidgetRefreshLogic.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WidgetRefreshLogic.swift; path = Shared/WidgetRefreshLogic.swift; sourceTree = "<group>"; };
+		EB83589215CF6EEDA96AE94F /* ProviderPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProviderPreferences.swift; path = Shared/ProviderPreferences.swift; sourceTree = "<group>"; };
+		EC210524609674B010ABB19D /* CacheMaintenanceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CacheMaintenanceTests.swift; path = Tests/CacheMaintenanceTests.swift; sourceTree = "<group>"; };
+		EE25537FB193265CDE4BE34A /* OpenRouterPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OpenRouterPanel.swift; path = App/OpenRouterPanel.swift; sourceTree = "<group>"; };
+		EF812C212B14ABB60074B094 /* OllamaCloud.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OllamaCloud.swift; path = Shared/OllamaCloud.swift; sourceTree = "<group>"; };
 		F200229134C7A34DC672A63D /* Public.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Public.xcconfig; path = Configuration/Public.xcconfig; sourceTree = "<group>"; };
+		F22D3B146B27DC4AE4E69FE2 /* QoderPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = QoderPanel.swift; path = App/QoderPanel.swift; sourceTree = "<group>"; };
 		F577D9F517AE9AA523A28EE2 /* AuthAPI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AuthAPI.swift; path = Shared/AuthAPI.swift; sourceTree = "<group>"; };
+		F5AE43806BAE1D8C78D9E165 /* IncomingIPACleaner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IncomingIPACleaner.swift; path = Shared/IncomingIPACleaner.swift; sourceTree = "<group>"; };
+		FABD26D6C295896359B6C1BD /* CacheSettingsCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CacheSettingsCard.swift; path = App/CacheSettingsCard.swift; sourceTree = "<group>"; };
 		FAEE02696E0B9E04DAC4F70B /* UsageViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UsageViews.swift; path = Shared/UsageViews.swift; sourceTree = "<group>"; };
 		FDB7A056A23AC51A1A48014D /* StorageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StorageTests.swift; path = Tests/StorageTests.swift; sourceTree = "<group>"; };
+		A05000000000000000000003 /* WidgetRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/WidgetRenderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -227,6 +283,27 @@
 				59DBCD52896F97F82669D636 /* CommandCodePanel.swift */,
 				63D1619D0D63997836D8351D /* APIUsageAccountCard.swift */,
 				82F33AC40E2669B526E78F79 /* Build43Tests.swift */,
+				8AE538B5FB62C708FC23081E /* CacheMaintenance.swift */,
+				FABD26D6C295896359B6C1BD /* CacheSettingsCard.swift */,
+				EC210524609674B010ABB19D /* CacheMaintenanceTests.swift */,
+				47038547CA2B061BC4672883 /* StorageDiagnosticsScanner.swift */,
+				15E971676FD51FE7CFE79507 /* StorageDiagnosticsView.swift */,
+				F5AE43806BAE1D8C78D9E165 /* IncomingIPACleaner.swift */,
+				D67F15999FB1A2767FFBB3C0 /* IncomingIPACleanupView.swift */,
+				45F63D2537A410386E23C504 /* KeychainCapabilityResolver.swift */,
+				2FFF92C501AFC20CEE737EE4 /* KeychainCapabilityResolverTests.swift */,
+				EF812C212B14ABB60074B094 /* OllamaCloud.swift */,
+				8B7BBB4C67487903D1013B24 /* OpenRouter.swift */,
+				9493D270193824220D32FA20 /* Qoder.swift */,
+				5B57C02BCA117F116E5350B0 /* OAuthLoopback.swift */,
+				EB83589215CF6EEDA96AE94F /* ProviderPreferences.swift */,
+				139282E87438EEDEF76EC091 /* OllamaCloudPanel.swift */,
+				EE25537FB193265CDE4BE34A /* OpenRouterPanel.swift */,
+				F22D3B146B27DC4AE4E69FE2 /* QoderPanel.swift */,
+				3C22F869D0CF75364880A32D /* Build45OAuthTests.swift */,
+				96DA6D28938B67E79E62DDC1 /* Build45ProviderTests.swift */,
+				E464BDEA5EE79FB2D5146E97 /* WidgetRefreshLogic.swift */,
+				2AE73771FBCDE4860F2E323B /* WidgetRefreshLogicTests.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -341,6 +418,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AAA051000000000000000001 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -372,6 +450,13 @@
 				8E6BBF3B231086C2552CDF3E /* ProtocolTests.swift in Sources */,
 				5C997457C6A1F8DD280C421E /* Build42ProviderTests.swift in Sources */,
 				2556AB0A95578D05DB7B591F /* Build43Tests.swift in Sources */,
+				6C7C34DEFCFFE6470D9DEC4B /* CacheMaintenanceTests.swift in Sources */,
+				F3CF41542A44D1842782733A /* KeychainCapabilityResolverTests.swift in Sources */,
+				C34B66E95D3B0624703C3089 /* Build45OAuthTests.swift in Sources */,
+				20B52549C55956B2AE788001 /* Build45ProviderTests.swift in Sources */,
+				EE10EFFD94446F32FEC36E9B /* WidgetRefreshLogicTests.swift in Sources */,
+				A05000000000000000000001 /* WidgetRenderTests.swift in Sources */,
+				A05000000000000000000002 /* CodeGoWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -396,6 +481,16 @@
 				55DE942DF0CDA35F3E8D7342 /* OpenCodeGo.swift in Sources */,
 				85A34DDEA4E4B2E19FF4FFE0 /* CommandCode.swift in Sources */,
 				C32F6A062C8DB61B53D7BEED /* ProviderCardData.swift in Sources */,
+				D74C331443834F84EDC88791 /* CacheMaintenance.swift in Sources */,
+				A23C196D71C705B8B9BAB07A /* StorageDiagnosticsScanner.swift in Sources */,
+				6D2A9D948A2F2BEB50DED0BA /* IncomingIPACleaner.swift in Sources */,
+				8AFC256AA76321614927D1F4 /* KeychainCapabilityResolver.swift in Sources */,
+				3E5D1014F8B3A8B2CA7F2AA0 /* OllamaCloud.swift in Sources */,
+				FB26CCEB6169A04039AA9A82 /* OpenRouter.swift in Sources */,
+				E49D11AA52DC3F94DB677178 /* Qoder.swift in Sources */,
+				0D1533AE1ACAFE3C31D8D096 /* OAuthLoopback.swift in Sources */,
+				F498DE225DE255375B822708 /* ProviderPreferences.swift in Sources */,
+				5CC9C199D814279AF344F476 /* WidgetRefreshLogic.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -430,6 +525,22 @@
 				1A4B20300BD00E37F3BB8268 /* OpenCodeGoPanel.swift in Sources */,
 				2888761F29DEA14C0C1C336E /* CommandCodePanel.swift in Sources */,
 				832D69D3A24C473D04E5D11B /* APIUsageAccountCard.swift in Sources */,
+				84A34D41E25D210D0CE3733C /* CacheMaintenance.swift in Sources */,
+				F429B050AF977CFF67B681E2 /* CacheSettingsCard.swift in Sources */,
+				E514F47C2CF8EAA548EBBBCF /* StorageDiagnosticsScanner.swift in Sources */,
+				8034417EC651C9E34C3A2737 /* StorageDiagnosticsView.swift in Sources */,
+				83AE3DF1480D49EB98CB311C /* IncomingIPACleaner.swift in Sources */,
+				41E15F6707BF10A0E02C0362 /* IncomingIPACleanupView.swift in Sources */,
+				990BD99AE7F6299379224DD4 /* KeychainCapabilityResolver.swift in Sources */,
+				576122C44542101E8C212F77 /* OllamaCloud.swift in Sources */,
+				162AEC96FA94AD62CA56D825 /* OpenRouter.swift in Sources */,
+				E15ABA6465A9DDBECDF2C9C9 /* Qoder.swift in Sources */,
+				55143D0E927153A380275959 /* OAuthLoopback.swift in Sources */,
+				D43C83D5A2DB14FD9A5CDB09 /* ProviderPreferences.swift in Sources */,
+				A73DB0CBC5CC195E7E51B76F /* OllamaCloudPanel.swift in Sources */,
+				F0C8914F676D95AC90C3FE3B /* OpenRouterPanel.swift in Sources */,
+				1AFD895598A8D74A61687F45 /* QoderPanel.swift in Sources */,
+				D75AA4274DC54E7691E00A39 /* WidgetRefreshLogic.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -462,7 +573,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
@@ -472,7 +583,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER)";
 				PRODUCT_MODULE_NAME = CodeGo;
 				SDKROOT = iphoneos;
@@ -495,12 +606,12 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Tests";
 				PRODUCT_MODULE_NAME = CodeGoTests;
 				SDKROOT = iphoneos;
@@ -525,7 +636,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
@@ -535,7 +646,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER)";
 				PRODUCT_MODULE_NAME = CodeGo;
 				SDKROOT = iphoneos;
@@ -557,14 +668,15 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Tests";
 				PRODUCT_MODULE_NAME = CodeGoTests;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG CODEGO_WIDGET_RENDER_TESTS";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -586,7 +698,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;
@@ -594,7 +706,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Widget";
 				PRODUCT_MODULE_NAME = CodeGoWidget;
 				SDKROOT = iphoneos;
@@ -642,7 +754,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -660,7 +772,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -682,7 +794,7 @@
 				CODEX_APP_BUNDLE_IDENTIFIER = com.personal.CodexUsage;
 				CODE_SIGN_ENTITLEMENTS = Configuration/Shared.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;
@@ -690,7 +802,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				KEYCHAIN_GROUP_IDENTIFIER = com.personal.CodexUsage.shared;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(CODEX_APP_BUNDLE_IDENTIFIER).Widget";
 				PRODUCT_MODULE_NAME = CodeGoWidget;
 				SDKROOT = iphoneos;
@@ -739,7 +851,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 51;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -751,7 +863,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MARKETING_VERSION = 4.7;
+				MARKETING_VERSION = 6.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

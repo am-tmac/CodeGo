@@ -23,6 +23,11 @@ class AnalyticsContracts(unittest.TestCase):
   shared=(R/'Shared/TokensCI.swift').read_text()
   self.assertIn('minimal.history = nil',shared)
   # 2026-10-18: approved progress-reload, Antigravity pairing and 月预估 removal; keep bytes pinned.
+  # 2026-11-12 (build 45): OpenRouter / Ollama Cloud / Qoder compact rows and the OpenCode Go
+  # plan label are deliberate widget changes; the bytes are re-pinned so any further change stays
+  # a reviewed decision rather than drift.
+  # Build 50: refresh logic and DEBUG test-only rendering imports changed; all view bodies,
+  # sizes and style values remain pinned. This still rejects unreviewed widget/UI drift.
   baseline=json.loads((R/'Tests/Fixtures/widget-bugfix-baseline.json').read_text())
   for name,digest in baseline.items():self.assertEqual(hashlib.sha256((R/name).read_bytes()).hexdigest(),digest,name)
  def test_no_monthly_estimate(self):

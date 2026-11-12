@@ -1,130 +1,12 @@
 import SwiftUI
-import Network
 import SafariServices
 import WidgetKit
 
-/// One-shot loopback listener for the Claude redirect.
-///
-/// The Claude Code OAuth client registers exactly `http://localhost:54545/callback`, so the port is
-/// not negotiable and there is no random-port fallback: a busy port fails the flow with a named
-/// reason instead of registering a redirect the server would reject. The redirect lands on
-/// 127.0.0.1 only, and the authorization code is exchanged directly with Anthropic — it never goes
-/// through any third party. `ASWebAuthenticationSession` cannot receive a loopback redirect (it
-/// only hands back a custom scheme), which is why the App runs this listener itself and presents
-/// the consent page with `SFSafariViewController` in-app: the presenting process stays alive, so
-/// the user cannot be suspended mid-login and the listener always answers.
-final class ClaudeOAuthListener {
-    private final class ResumeGate: @unchecked Sendable {
-        private let lock = NSLock()
-        private var claimed = false
-        func claim() -> Bool {
-            lock.lock(); defer { lock.unlock() }
-            guard !claimed else { return false }
-            claimed = true
-            return true
-        }
-    }
-    private var listener: NWListener?
-    private var finish: ((Result<ClaudeOAuth.Callback, Error>) -> Void)?
-    private var settled = false
-    private var expectedState = ""
-
-    /// Binds 127.0.0.1:54545 and stays open until one valid callback arrives.
-    func start(expectedState: String, completion: @escaping (Result<ClaudeOAuth.Callback, Error>) -> Void) async throws {
-        guard listener == nil else { throw ClaudeFailure.listenerBusy }
-        self.finish = completion
-        self.settled = false
-        self.expectedState = expectedState
-        guard await bind() else {
-            finish = nil
-            throw ClaudeFailure.listenerBusy
-        }
-    }
-
-    private func bind() async -> Bool {
-        let parameters = NWParameters.tcp
-        parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1",
-                                                    port: NWEndpoint.Port(rawValue: ClaudeOAuth.callbackPort)!)
-        guard let candidate = try? NWListener(using: parameters) else { return false }
-        candidate.newConnectionHandler = { [weak self] connection in self?.handle(connection) }
-        listener = candidate
-        return await withCheckedContinuation { continuation in
-            let gate = ResumeGate()
-            candidate.stateUpdateHandler = { [weak self] state in
-                switch state {
-                case .ready:
-                    guard gate.claim() else { return }
-                    candidate.stateUpdateHandler = nil
-                    continuation.resume(returning: true)
-                case .failed, .cancelled:
-                    guard gate.claim() else { return }
-                    candidate.cancel()
-                    if self?.listener === candidate { self?.listener = nil }
-                    continuation.resume(returning: false)
-                default: break
-                }
-            }
-            candidate.start(queue: .main)
-        }
-    }
-
-    func stop() {
-        listener?.cancel()
-        listener = nil
-        finish = nil
-        settled = true
-        expectedState = ""
-    }
-
-    private func handle(_ connection: NWConnection) {
-        connection.start(queue: .main)
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 8192) { [weak self] data, _, _, _ in
-            guard let self, let data, let text = String(data: data, encoding: .utf8) else { return }
-            let line = text.split(separator: "\r\n").first.map(String.init) ?? text
-            let result = ClaudeOAuth.parseCallback(line, expectedState: expectedState)
-            let body: String
-            switch result {
-            case .code:
-                body = Self.page(title: "登录完成", detail: "可以关闭此页，回到 Codex 用量继续。")
-            case .failure:
-                body = Self.page(title: "登录未完成", detail: "Claude 未完成授权，请回到 App 重试。")
-            case nil:
-                body = Self.page(title: "等待登录", detail: "这个地址只用于接收 Claude 登录回调。")
-            }
-            let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n" + body
-            connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
-            guard let result else { return }
-            switch result {
-            case .code: self.succeed(result)
-            case .failure: self.fail(ClaudeFailure.unauthorized)
-            }
-        }
-    }
-
-    private func succeed(_ callback: ClaudeOAuth.Callback) {
-        guard !settled else { return }
-        settled = true
-        listener?.cancel(); listener = nil
-        let completion = finish; finish = nil
-        completion?(.success(callback))
-    }
-
-    private func fail(_ error: Error) {
-        guard !settled else { return }
-        settled = true
-        listener?.cancel(); listener = nil
-        let completion = finish; finish = nil
-        completion?(.failure(error))
-    }
-
-    private static func page(title: String, detail: String) -> String {
-        "<!doctype html><meta name=viewport content=\"width=device-width,initial-scale=1\"><body style=\"font-family:-apple-system;padding:2rem;background:#0b0b0f;color:#fff\"><h2>\(title)</h2><p style=\"color:#aaa\">\(detail)</p></body>"
-    }
-}
-
 /// In-app browser for the consent page: our own process keeps running, so the loopback redirect is
 /// always caught. This is the same presentation the reference app uses for its system sign-in
-/// sheet, without a custom scheme (which this client rejects).
+/// sheet, without a custom scheme (which this client rejects). `ASWebAuthenticationSession` cannot
+/// receive a loopback redirect (it only hands back a custom scheme), which is why the listener is
+/// a local `LoopbackCallbackServer`.
 struct ClaudeWebSheet: UIViewControllerRepresentable {
     let url: URL
     func makeUIViewController(context: Context) -> SFSafariViewController { SFSafariViewController(url: url) }
@@ -139,7 +21,7 @@ final class ClaudeLogin: ObservableObject {
     /// The console flow shows a copyable `code#state`; the field only ever holds that one-time code.
     @Published var showCodePaste = false
     @Published var codeInput = ""
-    private var listener: ClaudeOAuthListener?
+    private var listener: LoopbackCallbackServer?
     private var verifier = ""
     private var state = ""
     private var redirect = ClaudeOAuth.redirectURI
@@ -181,9 +63,15 @@ final class ClaudeLogin: ObservableObject {
         }
         Task { @MainActor [weak self] in
             guard let self else { return }
-            let listener = ClaudeOAuthListener()
+            // The Claude Code client registers exactly this loopback redirect, so the port is
+            // fixed: the shared server is given one candidate and never falls back to another.
+            let listener = LoopbackCallbackServer(configuration: .init(
+                path: ClaudeOAuth.callbackPath, ports: [ClaudeOAuth.callbackPort], timeout: 300,
+                pages: .init(successTitle: "登录完成", successDetail: "可以关闭此页，回到 Codex 用量继续。",
+                             failureTitle: "登录未完成", failureDetail: "Claude 未完成授权，请回到 App 重试。",
+                             waitingTitle: "等待登录", waitingDetail: "这个地址只用于接收 Claude 登录回调。")))
             do {
-                try await listener.start(expectedState: state) { [weak self] result in
+                _ = try await listener.start(expectedState: state) { [weak self] result in
                     Task { @MainActor in await self?.finished(result) }
                 }
                 self.listener = listener
@@ -191,7 +79,9 @@ final class ClaudeLogin: ObservableObject {
             } catch {
                 listener.stop()
                 busy = false
-                message = error.localizedDescription
+                // Same copy as before the refactor: a busy fixed port is the only realistic
+                // failure and it sends the user to the paste-code fallback.
+                message = ClaudeFailure.listenerBusy.localizedDescription
             }
         }
     }
@@ -231,15 +121,19 @@ final class ClaudeLogin: ObservableObject {
         showCodePaste = false
     }
 
-    private func finished(_ result: Result<ClaudeOAuth.Callback, Error>) async {
+    private func finished(_ result: Result<LoopbackCallback, Error>) async {
         authorizeURL = nil
         switch result {
-        case .success(.code(let code, let state)):
-            busy = true
-            await complete(code: code, state: state, redirectURI: redirect)
-        case .success(.failure):
-            busy = false
-            message = "Claude 未完成授权，请重试。"
+        case .success(let callback):
+            switch callback {
+            case .code(let code):
+                let state = self.state
+                busy = true
+                await complete(code: code, state: state, redirectURI: redirect)
+            case .failure:
+                busy = false
+                message = ClaudeFailure.unauthorized.localizedDescription
+            }
         case .failure(let error):
             busy = false
             message = error.localizedDescription

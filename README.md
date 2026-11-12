@@ -6,8 +6,9 @@ CodeGo（原名 CodexUsage）是独立 SwiftUI iOS 17+ 自用 App：iPhone 自�
 
 ## 版本
 
-当前 **4.7 / build 44**。逐版变更与验证记录见 Git 提交历史；最近一次的实测结果见 `VERIFICATION.md`。
+当前 **6.1 / build 49**。逐版变更与验证记录见 Git 提交历史；最近一次的实测结果见 `VERIFICATION.md`。
 
+- 6.1 (49)：合并 build 48 的组件钥匙串重探与缓存维护工作；新增 OpenRouter、Ollama Cloud、Qoder（API Key / 个人访问令牌）；OpenCode Go 支持本地选择 Go / Go Plus 套餐；Claude / Antigravity 的回环登录改用共享组件，新增设备码流程基建。
 - 4.7 (44)：新图标 Gauge G（白色 G + 青柠仪表指针，墨黑底），浅色 / 深色 / 着色三种外观。
 - 4.6 (43)：改名 CodeGo；Codex 组件底部显示「重置积分 N · 更新 时间」，不再显示账号名。
 - 4.5 (42)：Codex 重置积分明细；新增 OpenCode Go、Command Code（API Key）。

@@ -29,13 +29,15 @@ final class ReviewFixTests: XCTestCase {
 
     func testFix02OnlyIntentRequestsProgressReload() throws {
         let storage = try reviewSource("Shared/Storage.swift")
-        let views = try reviewSource("Shared/UsageViews.swift")
+        let logic = try reviewSource("Shared/WidgetRefreshLogic.swift")
         let widget = try reviewSource("Widget/CodeGoWidget.swift")
         XCTAssertTrue(storage.contains("if notifyProgress { WidgetCenter.shared.reloadTimelines"))
-        XCTAssertTrue(views.contains("WidgetRefresh.one(id: id, provider: provider, notifyProgress: true)"))
-        XCTAssertTrue(views.contains("provider: String, notifyProgress: Bool = false"))
-        XCTAssertTrue(views.contains("widget: true, notifyProgress: notifyProgress, permission:"))
-        XCTAssertTrue(widget.contains("WidgetRefresh.one(id: id, provider: provider)"))
+        // Build 50 moved the intent and the per-slot call into Shared/WidgetRefreshLogic.swift so
+        // the timeline, the button and the unit tests share one path.
+        XCTAssertTrue(logic.contains("notifyProgress: true"))
+        XCTAssertTrue(logic.contains("permission: { DashboardStore.canRefresh(id, provider: \"codex\") }"))
+        XCTAssertTrue(widget.contains("WidgetRefreshCoordinator().perform(slots, respectFreshness: true)"))
+        XCTAssertFalse(widget.contains("WidgetRefresh.one(id: id, provider: provider)"))
     }
 
     func testFix03ExhaustedModelsKeepZeroAndReset() throws {
@@ -504,11 +506,12 @@ final class ReviewFixTests: XCTestCase {
         let compact = try XCTUnwrap(views.components(separatedBy: "struct ClaudeCompactView: View {").last)
             .components(separatedBy: "struct CompactUsageView: View {")[0]
         XCTAssertTrue(widget.contains("needsAppRefresh"), "column must remove refresh permission when App renewal is required")
-        XCTAssertTrue(widget.contains("打开 App 更新授权"), "open App is distinct from refresh")
+        XCTAssertTrue(widget.contains("需要在 App 中更新授权"), "open App is distinct from refresh")
         XCTAssertTrue(compact.contains("needsAppRefresh"))
         XCTAssertTrue(compact.contains("snapshot?.isStale()"))
         XCTAssertTrue(compact.contains("无缓存 · 打开 App 更新授权"))
-        XCTAssertTrue(views.contains("requiresAppRefresh"), "the intent must skip Claude needing App renewal even in a mixed widget")
+        let logic = try String(contentsOf: root.appendingPathComponent("Shared/WidgetRefreshLogic.swift"))
+        XCTAssertTrue(logic.contains("requiresAppRefresh"), "the intent must skip Claude needing App renewal even in a mixed widget")
     }
 
     // MARK: - Antigravity must not overwrite a good cache with an error

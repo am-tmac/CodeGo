@@ -21,6 +21,19 @@ enum ProviderParsing {
     static func first(_ object: [String: Any], _ keys: [String]) -> Any? {
         keys.lazy.compactMap { object[$0] }.first
     }
+    /// Booleans that may arrive as real booleans, 0/1, or "true"/"false".
+    static func flag(_ value: Any?) -> Bool? {
+        if let n = value as? NSNumber, CFGetTypeID(n) == CFBooleanGetTypeID() { return n.boolValue }
+        if let s = value as? String {
+            switch s.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "true", "yes", "1": return true
+            case "false", "no", "0": return false
+            default: return nil
+            }
+        }
+        if let n = value as? NSNumber { return n.doubleValue == 0 ? false : true }
+        return nil
+    }
     static func date(_ value: Any?) -> Date? {
         if let seconds = number(value) { return Date(timeIntervalSince1970: seconds > 1e12 ? seconds / 1000 : seconds) }
         guard let text = value as? String else { return nil }

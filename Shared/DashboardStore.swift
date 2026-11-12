@@ -12,6 +12,9 @@ struct DashboardAccount: Codable, Equatable, Identifiable {
         switch provider {
         case "opencodego": name = "OpenCode Go"
         case "commandcode": name = "Command Code"
+        case "openrouter": name = "OpenRouter"
+        case "ollamacloud": name = "Ollama Cloud"
+        case "qoder": name = "Qoder"
         case "deepseek": name = "DeepSeek"
         case "antigravity": name = "Antigravity"
         case "claude": name = "Claude"
@@ -41,9 +44,19 @@ enum DashboardStore {
         rows += try CommandCodeStore.ids().enumerated().map { index, id in
             DashboardAccount(id: id, provider: "commandcode", ordinal: index + 1, credentialGroup: CommandCodeStore.credentialGroup(id))
         }
-        // tokens.ci profiles are keyed by username, which is also the account id the widget uses.
+        rows += try OpenRouterStore.ids().enumerated().map { index, id in
+            DashboardAccount(id: id, provider: "openrouter", ordinal: index + 1, credentialGroup: OpenRouterStore.credentialGroup(id))
+        }
+        rows += try OllamaCloudStore.ids().enumerated().map { index, id in
+            DashboardAccount(id: id, provider: "ollamacloud", ordinal: index + 1, credentialGroup: OllamaCloudStore.credentialGroup(id))
+        }
+        rows += try QoderStore.ids().enumerated().map { index, id in
+            DashboardAccount(id: id, provider: "qoder", ordinal: index + 1, credentialGroup: QoderStore.credentialGroup(id))
+        }
+        // tokens.ci credentials live in the same permitted group as every API provider, so the
+        // extension can read the read-token and hit the profile endpoint itself.
         rows += TokensCIStore.ids().enumerated().map { index, id in
-            DashboardAccount(id: id, provider: "tokensci", ordinal: index + 1, credentialGroup: nil) // Intentionally cache-only.
+            DashboardAccount(id: id, provider: "tokensci", ordinal: index + 1, credentialGroup: TokensCIStore.credentialGroup(id))
         }
         // Antigravity publishes one row so the widget picker can point a slot at it. Its credential
         // group is the group the token was written under.

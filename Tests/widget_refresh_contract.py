@@ -27,10 +27,9 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('addingTimeInterval(900)', source)
         self.assertNotIn('addingTimeInterval(1800)', source)
     def test_cache_only_control_is_present_and_never_disguised_as_refresh(self):
-        # Contract change (build 21): build 20 answered the earlier "the icon opened the App"
-        # complaint by deleting the cache-only control, so on a device without the sharing
-        # handshake the widget had NO refresh control at all. The policy is now: exactly one
-        # control, present in BOTH states, and the two states must never look alike.
+        # Contract change (build 50): both states are now iOS 17 interactive-widget buttons.
+        # The unauthorized tap issues NO request and reloads the timeline.
+        # Build 51 uses a shared refresh glyph with an explicit cache-only accessibility label.
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
         widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         affordance = views.split('struct RefreshAffordance: View {', 1)[1].split('\nstruct DeepSeekCompactView:', 1)[0]
@@ -40,31 +39,31 @@ class WidgetRefreshContract(unittest.TestCase):
         cache_only = affordance.split('} else {', 1)[1].split('#else', 1)[0]
         glyph_def = affordance.split('var glyph: some View {', 1)[1].split('}', 1)[0]
         open_def = affordance.split('var openAppGlyph: some View {', 1)[1].split('}', 1)[0]
-        # The two states must not share a symbol: the circular refresh glyph belongs to the
-        # AppIntent refresh only, and the open-App branch draws something visibly different.
+        # Build 51 uses the circular glyph in both states; cache-only accessibility remains explicit.
         self.assertIn('arrow.clockwise', glyph_def)
-        self.assertIn('arrow.up.forward.app', open_def)
-        self.assertNotIn('arrow.clockwise', open_def)
+        self.assertIn('glyph', open_def)
+        self.assertNotIn('Link(', open_def)
         # Authorized: the real in-widget AppIntent refresh, drawn with the circular glyph.
-        self.assertIn('Button(intent: RefreshDashboardIntent(leftID: leftID, rightID: rightID))', authorized)
+        self.assertIn('Button(intent: RefreshWidgetIntent(leftID: leftID, rightID: rightID))', authorized)
         self.assertIn('glyph', authorized)
         self.assertNotIn('openAppGlyph', authorized)
         self.assertIn('.frame(width: 44, height: 44).contentShape(Rectangle())', authorized)
-        # Not authorized: an open-App control that is visibly a different glyph and label, and
-        # carries no refresh intent at all. It opens the App, where the fetch is actually allowed.
-        self.assertIn('Link(destination: Self.openAppURL)', cache_only)
+        # Not authorized: still a button (so the tap reloads), but no Link and no network path of
+        # its own; the coordinator filters every slot at perform time.
+        self.assertIn('Button(intent: RefreshWidgetIntent(leftID: leftID, rightID: rightID))', cache_only)
         self.assertIn('openAppGlyph', cache_only)
-        self.assertIn('accessibilityLabel("打开 App 刷新")', cache_only)
-        self.assertNotIn('RefreshDashboardIntent', cache_only)
+        self.assertNotIn('Link(destination: Self.openAppURL)', cache_only)
+        self.assertIn('accessibilityLabel("重新载入缓存")', cache_only)
         # No root widgetURL: no tap can be routed around the AppIntent refresh button.
         # Build 34 adds a dedicated cache-only tokens.ci widget with an explicit open-App route.
         # The interactive quota dashboard must still have no root link around its intent.
         self.assertNotIn('.widgetURL(', widget.split('// MARK: - tokens.ci')[0])
         self.assertIn('仅缓存 · 组件无刷新授权，打开 App', views)
-        # build 28: slots without refresh permission are filtered out before the concurrent fetch.
-        self.assertIn('RefreshTargets.unique([leftID, rightID]).filter {', views)
-        self.assertIn('DashboardStore.canRefreshAnyProvider($0) &&', views)
-        self.assertIn('($0 != ClaudeStore.id || !WidgetRefreshAttempt.load($0).requiresAppRefresh)', views)
+        # build 50: slots without refresh permission are filtered out by the shared coordinator,
+        # before the concurrent fetch, and Claude's App-renewal marker is honoured there.
+        logic = (ROOT / 'Shared/WidgetRefreshLogic.swift').read_text()
+        self.assertIn('guard seen.insert(slot.id).inserted, canRefresh(slot.id) else { return false }', logic)
+        self.assertIn('guard !state.requiresAppRefresh,', logic)
     def test_widget_refresh_authorization_is_visible_in_the_app(self):
         # The point of the control is that the user can turn the real refresh on: the App must name
         # the missing step and refuse the switch instead of silently failing.
@@ -146,10 +145,10 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('TimelineView(.periodic(from: .now, by: 60))', connect)
         self.assertIn('Countdown.short(window.reset, now: context.date)', connect)
         self.assertIn('Countdown.resetLine(date, now: context.date)', connect)
-        # Build 42 adds API-provider reset countdowns; App-only brand views still stay out.
+        # Build 51 reuses Logo assets; App-only brand view types still stay out.
         views = (ROOT / 'Shared/UsageViews.swift').read_text()
         widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
-        for token in ['BrandMark', 'LogoOpenAI', 'SummaryLine']:
+        for token in ['BrandMark', 'SummaryLine']:
             self.assertNotIn(token, views + widget)
     def test_claude_signs_in_with_oauth_and_keeps_no_session_secret(self):
         # Contract change (build 21): the embedded cookie-scraping browser and the manual
@@ -223,10 +222,14 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertLess(source.index('row("5h"'), source.index('row("7d"'))
         self.assertIn('.fixedSize(horizontal: false, vertical: true)', source)
     def test_intent_only_in_extension(self):
-        source = (ROOT / 'Shared/UsageViews.swift').read_text()
-        self.assertIn('#if CODEX_WIDGET\n/// One control for the whole widget', source)
-        self.assertIn('struct RefreshDashboardIntent: AppIntent', source)
+        source = (ROOT / 'Shared/WidgetRefreshLogic.swift').read_text()
+        views = (ROOT / 'Shared/UsageViews.swift').read_text()
+        # Codable was added to the same AppIntent; preserve the original single intent check.
+        # The intent lives next to the coordinator, outside the App-only UI file, and is compiled
+        # into the extension (and the App for @testable unit tests) by the project targets.
+        self.assertIn('struct RefreshWidgetIntent: AppIntent, Codable', source)
         self.assertIn('static var openAppWhenRun = false', source)
+        self.assertIn('Button(intent: RefreshWidgetIntent(', views)
         project = (ROOT / 'CodeGo.xcodeproj/project.pbxproj').read_text()
         self.assertEqual(project.count('SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) CODEX_WIDGET"'), 2)
     def test_preserves_namespace_without_migration(self):
@@ -244,10 +247,10 @@ class WidgetRefreshContract(unittest.TestCase):
         # The label is driven by the persisted start marker, not an optimistic guess.
         self.assertIn('isRefreshing(at: Date())', widget)
         self.assertIn('WidgetRefreshAttempt.load(', widget)
-        self.assertIn('refreshing: value.refreshing', widget)
+        self.assertIn('value.refreshing', widget)
         # Timeline re-render must show progress without issuing a competing fetch.
-        self.assertLess(widget.index('isRefreshing(at: Date())'), widget.index('WidgetRefresh.one(id: id, provider: provider)'))
-        self.assertIn('!column.refreshing else { return nil }', widget)
+        self.assertLess(widget.index('isRefreshing(at: Date())'), widget.index('WidgetRefreshCoordinator().perform(slots, respectFreshness: true)'))
+        self.assertIn('!state.isRefreshing(at: timestamp)', (ROOT / 'Shared/WidgetRefreshLogic.swift').read_text())
         # Extension-kill recovery clears the stale marker before the throttle decision.
         self.assertIn('recoverInterrupted', storage)
         self.assertLess(storage.index('recoverInterrupted(Date())'), storage.index('guard attempt.allows(Date())'))
@@ -257,15 +260,14 @@ class WidgetRefreshContract(unittest.TestCase):
         widget = (ROOT / 'Widget/CodeGoWidget.swift').read_text()
         self.assertIn('attempt.begin(Date()); try attempt.save(id)', source)
         self.assertIn('.reloadTimelines(ofKind: "CodexUsageWidget")', source)
-        # Only the extension compiles an intent; the App never issues a widget fetch.
-        self.assertIn('#if CODEX_WIDGET', views)
-        self.assertEqual(views.count('struct RefreshDashboardIntent: AppIntent'), 1)
-        self.assertIn('WidgetCenter.shared.reloadAllTimelines()', views)
-        # build 28: both slots refresh concurrently; a cancelled tap still surfaces as cancelled.
-        self.assertIn('await withTaskGroup(of: Void.self)', views)
-        self.assertIn('await withTaskGroup(of: Void.self)', widget)
-        self.assertIn('try Task.checkCancellation()\n        return .result()', views)
-        self.assertEqual(views.count('enum WidgetRefresh {'), 1)
+        logic = (ROOT / 'Shared/WidgetRefreshLogic.swift').read_text()
+        self.assertEqual(logic.count('struct RefreshWidgetIntent: AppIntent, Codable'), 1)
+        self.assertIn('WidgetCenter.shared.reloadTimelines(ofKind: "CodexUsageWidget")', logic)
+        # build 28/50: both slots refresh concurrently, and the same account is fetched once.
+        self.assertIn('await withTaskGroup(of: String?.self)', logic)
+        self.assertIn('seen.insert(slot.id).inserted', logic)
+        self.assertIn('WidgetRefreshCoordinator().perform(slots, respectFreshness: true)', widget)
+        self.assertEqual(logic.count('enum WidgetRefresh {'), 1)
 
     # --- parsers: never rely on generated Xcode object IDs staying the same ---
     def _target_block(self, project, name):
@@ -299,8 +301,8 @@ class WidgetRefreshContract(unittest.TestCase):
         configure = (ROOT / 'Scripts/configure.py').read_text()
         self.assertNotIn('CodexBlossom', configure)
         self.assertNotIn('widget_assets', configure)
-        # The App's own catalog and Resources phase are untouched; the widget compiles no catalog.
-        self.assertNotIn('Assets.xcassets', self._resources_phase(project, 'CodeGoWidget'))
+        # Build 51 shares the existing brand catalog with the widget; no new assets are introduced.
+        self.assertIn('Assets.xcassets in Resources', self._resources_phase(project, 'CodeGoWidget'))
         app_catalog = self._resources_phase(project, 'CodeGo')
         self.assertEqual(re.findall(r'path = (App/Assets\.xcassets)', project), ['App/Assets.xcassets'])
         self.assertIn('Assets.xcassets in Resources', app_catalog)
@@ -313,7 +315,7 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('column(entry.left)', widget)
         self.assertIn('column(entry.right)', widget)
         self.assertEqual(widget.count('RefreshAffordance(canRefresh:'), 1)
-        self.assertEqual(views.count('Button(intent: RefreshDashboardIntent'), 1)
+        self.assertEqual(views.count('Button(intent: RefreshWidgetIntent'), 2)  # both states, one control
         self.assertIn('.overlay(alignment: .topTrailing)', widget)
         self.assertNotIn('if family == .systemMedium', widget)
         # The medium control carries both slots; the small control only the slot it displays.
@@ -322,8 +324,9 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('var slotCanRefresh: Bool { isMedium ? (entry.left.canRefresh || entry.right.canRefresh) : entry.left.canRefresh }', widget)
         self.assertIn('RefreshAffordance(canRefresh: slotCanRefresh,', widget)
         self.assertIn('!slotCanRefresh && (entry.left.needsAppRefresh || (isMedium && entry.right.needsAppRefresh))', widget)
-        # tokens.ci slots are deliberately cache-only; other slots retain independent gating.
-        self.assertIn('canRefresh: provider != "tokensci" && !needsAppRefresh && (id.map', widget)
+        # build 50: tokens.ci credentials are refreshable too; only Claude's App-renewal state
+        # removes the permission from the column.
+        self.assertIn('canRefresh: !needsAppRefresh && (id.map', widget)
         self.assertIn('rightID: isMedium ? entry.right.id : nil', widget)
         self.assertIn('var hasConfiguredAccount: Bool { isMedium ? (entry.left.id != nil || entry.right.id != nil) : entry.left.id != nil }', widget)
         self.assertIn('if hasConfiguredAccount { refreshControl }', widget)
@@ -335,8 +338,10 @@ class WidgetRefreshContract(unittest.TestCase):
         # The 44pt hit region is at the outer Codex top-right corner, but at the
         # *bottom-right* of the stacked wallet: old 38pt bottom padding placed the
         # DeepSeek glyph halfway up the black card, not in the requested corner.
-        self.assertIn('inset: stackedCard ? 4 : 0, topInset: 0,', widget)
-        self.assertIn('bottomInset: stackedCard ? 4 : 0, bottomAligned: stackedCard)', widget)
+        # Codex keeps the outer top-right corner; the stacked DeepSeek wallet puts the same
+        # 44pt hit region at its bottom-right corner instead of over the top balance row.
+        self.assertIn('inset: stackedCard ? 4 : 0, topInset: 0', widget)
+        self.assertIn('bottomInset: stackedCard ? 4 : 0, bottomAligned: stackedCard', widget)
         self.assertIn('control.padding(.trailing, inset).padding(.bottom, bottomInset)', views)
         self.assertIn('.frame(width: 44, height: 44).contentShape(Rectangle())', views)
         self.assertIn('.overlay(alignment: .topTrailing)', widget)
@@ -358,7 +363,7 @@ class WidgetRefreshContract(unittest.TestCase):
         self.assertIn('Picker("主题"', app)
         self.assertIn('.preferredColorScheme(theme == .system ? nil', app)
         # The widget resolves the same palette instead of hardcoding one appearance.
-        self.assertIn('.resolve(entry.theme, scheme: scheme)', widget)
+        self.assertIn('.widget(scheme: entry.theme == .light', widget)
         self.assertIn('containerBackground(palette.background, for: .widget)', widget)
         self.assertNotIn('Color(red: 0.035, green: 0.065, blue: 0.13)', widget)
         for forbidden in ['.foregroundStyle(.white)', 'Color.white']:
@@ -389,6 +394,20 @@ class WidgetRefreshContract(unittest.TestCase):
         # Masking rules are untouched: the shared snapshot is masked unless opted in,
         # and the recovered identity feeds the same single masking decision.
         self.assertIn('public var displayIdentity: String?', auth)
+
+    def test_build48_failed_keychain_probe_is_not_cached_for_the_process(self):
+        # A widget process started while locked saw -25308 and stayed cache-only for hours.
+        storage = (ROOT / 'Shared/Storage.swift').read_text()
+        resolver = (ROOT / 'Shared/KeychainCapabilityResolver.swift').read_text()
+        self.assertNotIn('private static let capabilities', storage)
+        self.assertIn('private static var capabilities: KeychainCapabilityResolver.Capabilities { capabilityResolver.current }', storage)
+        self.assertIn('retryInterval: 30', storage)
+        self.assertIn('cached.diagnostics.selectedGroup != nil { return cached }', resolver)
+        self.assertIn('NSLock()', resolver)
+        self.assertIn('widgetDiagnosticsReport(diagnostics, handshakeStatus: respondToHandshake(), at: Date())', storage)
+        project = (ROOT / 'CodeGo.xcodeproj/project.pbxproj').read_text()
+        self.assertIn('KeychainCapabilityResolverTests.swift in Sources', project)
+        self.assertEqual(project.count('/* KeychainCapabilityResolver.swift in Sources */,'), 2)  # App + Widget phases
 
 
 if __name__ == '__main__': unittest.main()

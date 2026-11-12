@@ -99,17 +99,15 @@ enum ClaudeOAuth {
     }
 
     /// Parse only the registered callback path and require the one-time state before accepting
-    /// either a code or an error; a denied consent can never be exchanged.
+    /// either a code or an error; a denied consent can never be exchanged. The path/state rules
+    /// live in `LoopbackCallbackParser` so every provider shares one implementation.
     enum Callback: Equatable { case code(String, String), failure(String) }
     static func parseCallback(_ requestLine: String, expectedState: String) -> Callback? {
-        guard let target = requestLine.split(separator: " ").dropFirst().first,
-              let components = URLComponents(string: "http://localhost" + target),
-              components.path == callbackPath else { return nil }
-        func value(_ name: String) -> String? { components.queryItems?.first { $0.name == name }?.value }
-        guard value("state") == expectedState else { return nil }
-        if let error = value("error"), !error.isEmpty { return .failure(error) }
-        if let code = value("code"), !code.isEmpty { return .code(code, expectedState) }
-        return nil
+        guard let value = LoopbackCallbackParser.parse(requestLine: requestLine, path: callbackPath, expectedState: expectedState) else { return nil }
+        switch value {
+        case .code(let code): return .code(code, expectedState)
+        case .failure(let error): return .failure(error)
+        }
     }
     /// The console flow shows `code#state` for the user to copy. Only a code issued for the login
     /// in progress is accepted: a state that differs from `expectedState` is rejected, and with no

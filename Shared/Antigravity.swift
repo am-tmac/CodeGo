@@ -478,14 +478,11 @@ enum AntigravityOAuth {
     /// either a code or an error. A local process cannot forge a callback from an older login.
     enum Callback: Equatable { case code(String), failure(String) }
     static func parseCallback(_ requestLine: String, expectedState: String) -> Callback? {
-        guard let target = requestLine.split(separator: " ").dropFirst().first,
-              let components = URLComponents(string: "http://localhost" + target),
-              components.path == "/oauth2callback" else { return nil }
-        func value(_ name: String) -> String? { components.queryItems?.first { $0.name == name }?.value }
-        guard value("state") == expectedState else { return nil }
-        if let error = value("error"), !error.isEmpty { return .failure(error) }
-        if let code = value("code"), !code.isEmpty { return .code(code) }
-        return nil
+        guard let value = LoopbackCallbackParser.parse(requestLine: requestLine, path: "/oauth2callback", expectedState: expectedState) else { return nil }
+        switch value {
+        case .code(let code): return .code(code)
+        case .failure(let error): return .failure(error)
+        }
     }
 }
 

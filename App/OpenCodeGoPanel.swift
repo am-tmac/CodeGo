@@ -15,12 +15,14 @@ struct OpenCodeGoPanel: View {
 
     @State private var key = ""
     @State private var replacing: String?
+    @State private var plan: OpenCodeGoPlan
     @State private var busy = false
     @State private var consent = false
     @State private var message: String?
     init(model: UsageModel, replacing: String? = nil) {
         self.model = model
         _replacing = State(initialValue: replacing)
+        _plan = State(initialValue: replacing.map { ProviderPreferences.openCodeGoPlan(accountID: $0) } ?? .go)
     }
     var palette: AppPalette { .resolve(scheme) }
     /// Keychain or snapshot changed: republish through the model (it also rebuilds the widget
@@ -34,6 +36,11 @@ struct OpenCodeGoPanel: View {
             AppCard(title: "OpenCode Go API 用量", caption: replacing == nil ? "添加独立 API 账号" : "更新所选账号 Key（不回显旧 Key）",
                     systemImage: "key.horizontal", palette: palette) {
                 VStack(alignment: .leading, spacing: 12) {
+                    Picker("套餐", selection: $plan) {
+                        ForEach(OpenCodeGoPlan.allCases) { item in Text(item.displayName).tag(item) }
+                    }.pickerStyle(.segmented)
+                    Text("\(plan.displayName) · \(plan.priceText)。套餐只在本机记录并用于卡片显示，不改变用量接口的解析；未选择时按 Go 处理。")
+                        .font(.caption).foregroundStyle(palette.secondary)
                     Link("获取 OpenCode Go Key", destination: URL(string: "https://opencode.ai/auth")!)
                     SecureField("在 iPhone 输入 OpenCode Go API Key", text: $key)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().privacySensitive()
@@ -45,10 +52,11 @@ struct OpenCodeGoPanel: View {
                         Button("保存并读取用量") {
                             let entered = key
                             let replacingID = replacing
+                            let selected = plan
                             key = ""; busy = true; message = nil
                             Task {
                                 do {
-                                    let id = try await OpenCodeGoService.shared.install(key: entered, replacing: replacingID)
+                                    let id = try await OpenCodeGoService.shared.install(key: entered, plan: selected, replacing: replacingID)
                                     if replacing == replacingID { replacing = nil; consent = false }
                                     _ = try await OpenCodeGoService.shared.refresh(id: id, widget: false)
                                 } catch is CancellationError {
@@ -59,6 +67,24 @@ struct OpenCodeGoPanel: View {
                         if replacing != nil { Button("取消") { replacing = nil; key = ""; consent = false }.disabled(busy).tint(palette.secondary) }
                     }
                     if let message { Text(message).font(.caption).foregroundStyle(palette.warning) }
+                }
+            }
+            // Existing accounts: the plan is a local label. Changing it updates the card and the
+            // widget immediately and never triggers a usage request.
+            if !model.openCodeGoIDs.isEmpty {
+                AppCard(title: "已连接账号的套餐", caption: "仅本机记录 · 不影响接口解析", systemImage: "tag", palette: palette) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        ForEach(Array(model.openCodeGoIDs.enumerated()), id: \.element) { index, id in
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("账号 \(index + 1)").font(.footnote).foregroundStyle(palette.secondary)
+                                Picker("账号 \(index + 1) 套餐", selection: Binding(
+                                    get: { ProviderPreferences.openCodeGoPlan(accountID: id) },
+                                    set: { model.setOpenCodeGoPlan($0, id: id) })) {
+                                    ForEach(OpenCodeGoPlan.allCases) { item in Text("\(item.displayName) · \(item.priceText)").tag(item) }
+                                }.pickerStyle(.segmented)
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -3,9 +3,11 @@ import WidgetKit
 
 enum AppRefreshTarget: Hashable {
     case codex(String), commandCode(String), openCodeGo(String), deepSeek(String), antigravity, claude, tokensCI(String)
+    case openRouter(String), ollamaCloud(String), qoder(String)
     var accountID: String {
         switch self {
-        case .codex(let id), .commandCode(let id), .openCodeGo(let id), .deepSeek(let id): return id
+        case .codex(let id), .commandCode(let id), .openCodeGo(let id), .deepSeek(let id),
+             .openRouter(let id), .ollamaCloud(let id), .qoder(let id): return id
         case .antigravity: return AntigravityStore.account
         case .claude: return ClaudeStore.id
         case .tokensCI(let id): return "tokensci:" + id
@@ -34,6 +36,9 @@ enum AppRefreshError {
             return "Codex 刷新失败，保留缓存"
         case .openCodeGo: return (error as? OpenCodeGoError)?.localizedDescription ?? "OpenCode Go 刷新失败，保留缓存"
         case .commandCode: return (error as? CommandCodeError)?.localizedDescription ?? "Command Code 刷新失败，保留缓存"
+        case .openRouter: return (error as? OpenRouterError)?.localizedDescription ?? "OpenRouter 刷新失败，保留缓存"
+        case .ollamaCloud: return (error as? OllamaCloudError)?.localizedDescription ?? "Ollama Cloud 刷新失败，保留缓存"
+        case .qoder: return (error as? QoderError)?.localizedDescription ?? "Qoder 刷新失败，保留缓存"
         case .deepSeek: return (error as? DeepSeekError)?.localizedDescription ?? "DeepSeek 刷新失败，保留缓存"
         case .antigravity: return (error as? AntigravityError)?.localizedDescription ?? "Antigravity 刷新失败，保留缓存"
         case .claude: return (error as? ClaudeFailure)?.localizedDescription ?? "Claude 刷新失败，保留缓存"
@@ -51,6 +56,9 @@ struct AppRefreshFetchers {
     var tokensCI: @Sendable (String) async throws -> TokensCISnapshot = { try await TokensCIService.shared.refresh(username: $0, widget: false) }
     var openCodeGo: @Sendable (String) async throws -> OpenCodeGoSnapshot = { try await OpenCodeGoService.shared.refresh(id: $0, widget: false) }
     var commandCode: @Sendable (String) async throws -> CommandCodeSnapshot = { try await CommandCodeService.shared.refresh(id: $0, widget: false) }
+    var openRouter: @Sendable (String) async throws -> OpenRouterSnapshot = { try await OpenRouterService.shared.refresh(id: $0, widget: false) }
+    var ollamaCloud: @Sendable (String) async throws -> OllamaCloudSnapshot = { try await OllamaCloudService.shared.refresh(id: $0, widget: false) }
+    var qoder: @Sendable (String) async throws -> QoderSnapshot = { try await QoderService.shared.refresh(id: $0, widget: false) }
 }
 
 @MainActor final class UsageModel: ObservableObject {
@@ -58,6 +66,15 @@ struct AppRefreshFetchers {
     @Published var openCodeGoSnapshots: [String: OpenCodeGoSnapshot] = [:]
     @Published var commandCodeIDs: [String] = []
     @Published var commandCodeSnapshots: [String: CommandCodeSnapshot] = [:]
+    @Published var openRouterIDs: [String] = []
+    @Published var openRouterSnapshots: [String: OpenRouterSnapshot] = [:]
+    @Published var ollamaCloudIDs: [String] = []
+    @Published var ollamaCloudSnapshots: [String: OllamaCloudSnapshot] = [:]
+    @Published var qoderIDs: [String] = []
+    @Published var qoderSnapshots: [String: QoderSnapshot] = [:]
+    /// Bumped when a non-secret per-account preference (OpenCode Go plan) changes, so the cards
+    /// and the widget re-read it. Preferences are not @Published themselves.
+    @Published var preferencesRevision = 0
     @Published var deepSeekIDs: [String] = []
     @Published var balances: [String: DeepSeekSnapshot] = [:]
     /// DeepSeek accounts whose last refresh failed (from the persisted attempt record), loaded with
@@ -99,8 +116,20 @@ struct AppRefreshFetchers {
         if openCodeGoSnapshots != nextOpenCodeGoSnapshots { openCodeGoSnapshots = nextOpenCodeGoSnapshots }
         let nextCommandCodeIDs = (try? CommandCodeStore.ids()) ?? []
         let nextCommandCodeSnapshots = Dictionary(uniqueKeysWithValues: nextCommandCodeIDs.compactMap { id in CommandCodeStore.snapshot(id).map { (id, $0) } })
+        let nextOpenRouterIDs = (try? OpenRouterStore.ids()) ?? []
+        let nextOpenRouterSnapshots = Dictionary(uniqueKeysWithValues: nextOpenRouterIDs.compactMap { id in OpenRouterStore.snapshot(id).map { (id, $0) } })
+        let nextOllamaCloudIDs = (try? OllamaCloudStore.ids()) ?? []
+        let nextOllamaCloudSnapshots = Dictionary(uniqueKeysWithValues: nextOllamaCloudIDs.compactMap { id in OllamaCloudStore.snapshot(id).map { (id, $0) } })
+        let nextQoderIDs = (try? QoderStore.ids()) ?? []
+        let nextQoderSnapshots = Dictionary(uniqueKeysWithValues: nextQoderIDs.compactMap { id in QoderStore.snapshot(id).map { (id, $0) } })
         if commandCodeIDs != nextCommandCodeIDs { commandCodeIDs = nextCommandCodeIDs }
         if commandCodeSnapshots != nextCommandCodeSnapshots { commandCodeSnapshots = nextCommandCodeSnapshots }
+        if openRouterIDs != nextOpenRouterIDs { openRouterIDs = nextOpenRouterIDs }
+        if openRouterSnapshots != nextOpenRouterSnapshots { openRouterSnapshots = nextOpenRouterSnapshots }
+        if ollamaCloudIDs != nextOllamaCloudIDs { ollamaCloudIDs = nextOllamaCloudIDs }
+        if ollamaCloudSnapshots != nextOllamaCloudSnapshots { ollamaCloudSnapshots = nextOllamaCloudSnapshots }
+        if qoderIDs != nextQoderIDs { qoderIDs = nextQoderIDs }
+        if qoderSnapshots != nextQoderSnapshots { qoderSnapshots = nextQoderSnapshots }
         let nextDeepSeekIDs = (try? DeepSeekStore.ids()) ?? []
         let nextBalances = Dictionary(uniqueKeysWithValues: nextDeepSeekIDs.compactMap { id in DeepSeekStore.snapshot(id).map { (id, $0) } })
         try? DashboardStore.publish()
@@ -114,7 +143,7 @@ struct AppRefreshFetchers {
         let nextClaudeSnapshot = ClaudeStore.snapshot()
         let nextTokensCIIDs = TokensCIStore.ids()
         let nextTokensCISnapshots = Dictionary(uniqueKeysWithValues: nextTokensCIIDs.compactMap { id in TokensCIStore.snapshot(id).map { (id, $0) } })
-        let nextSignedIn = !nextCommandCodeIDs.isEmpty || !nextOpenCodeGoIDs.isEmpty || !nextAccounts.isEmpty || !nextDeepSeekIDs.isEmpty || nextAntigravityInstalled || nextClaudeInstalled || !nextTokensCIIDs.isEmpty
+        let nextSignedIn = !nextCommandCodeIDs.isEmpty || !nextOpenCodeGoIDs.isEmpty || !nextOpenRouterIDs.isEmpty || !nextOllamaCloudIDs.isEmpty || !nextQoderIDs.isEmpty || !nextAccounts.isEmpty || !nextDeepSeekIDs.isEmpty || nextAntigravityInstalled || nextClaudeInstalled || !nextTokensCIIDs.isEmpty
         // ObservableObject publishes even equal assignments. Cache-only reloads should
         // not invalidate every observing view; retain the existing ownership model.
         if deepSeekIDs != nextDeepSeekIDs { deepSeekIDs = nextDeepSeekIDs }
@@ -131,6 +160,7 @@ struct AppRefreshFetchers {
         if tokensCISnapshots != nextTokensCISnapshots { tokensCISnapshots = nextTokensCISnapshots }
         if signedIn != nextSignedIn { signedIn = nextSignedIn }
         reloadRefreshAttempts(targets: nextCommandCodeIDs.map { .commandCode($0) } + nextOpenCodeGoIDs.map { .openCodeGo($0) } + nextAccounts.map { .codex($0) } + nextDeepSeekIDs.map { .deepSeek($0) }
+                              + nextOpenRouterIDs.map { .openRouter($0) } + nextOllamaCloudIDs.map { .ollamaCloud($0) } + nextQoderIDs.map { .qoder($0) }
                               + (nextAntigravityInstalled ? [.antigravity] : []) + (nextClaudeInstalled ? [.claude] : []) + nextTokensCIIDs.map { .tokensCI($0) })
     }
     /// Load persisted feedback outside body; equal reloads emit no UI notifications.
@@ -202,7 +232,9 @@ struct AppRefreshFetchers {
             if background != .invalid { UIApplication.shared.endBackgroundTask(background) }
         }
         enum Result { case commandCode(String, CommandCodeSnapshot), openCodeGo(String, OpenCodeGoSnapshot), codex(String, UsageSnapshot), deepSeek(String, DeepSeekSnapshot), antigravity(AntigravitySnapshot),
-                      claude(ClaudeSnapshot), tokensCI(String, TokensCISnapshot), failed(AppRefreshTarget, String), cancelled }
+                      claude(ClaudeSnapshot), tokensCI(String, TokensCISnapshot),
+                      openRouter(String, OpenRouterSnapshot), ollamaCloud(String, OllamaCloudSnapshot), qoder(String, QoderSnapshot),
+                      failed(AppRefreshTarget, String), cancelled }
         let selection = target ?? account.map { AppRefreshTarget.codex($0) }
         let full = selection == nil
         let codexIDs: [String]
@@ -213,6 +245,12 @@ struct AppRefreshFetchers {
         if case .openCodeGo(let id)? = selection { openCodeGo = [id] } else { openCodeGo = full ? openCodeGoIDs : [] }
         let commandCode: [String]
         if case .commandCode(let id)? = selection { commandCode = [id] } else { commandCode = full ? commandCodeIDs : [] }
+        let openRouter: [String]
+        if case .openRouter(let id)? = selection { openRouter = [id] } else { openRouter = full ? openRouterIDs : [] }
+        let ollamaCloud: [String]
+        if case .ollamaCloud(let id)? = selection { ollamaCloud = [id] } else { ollamaCloud = full ? ollamaCloudIDs : [] }
+        let qoder: [String]
+        if case .qoder(let id)? = selection { qoder = [id] } else { qoder = full ? qoderIDs : [] }
         let withAntigravity = selection == .antigravity || (full && antigravityInstalled)
         let withClaude = selection == .claude || (full && claudeInstalled)
         let tokenIDs: [String]
@@ -231,6 +269,27 @@ struct AppRefreshFetchers {
                     do { return .commandCode(id, try await fetchers.commandCode(id)) }
                     catch is CancellationError { return .cancelled }
                     catch { return .failed(.commandCode(id), AppRefreshError.text(error, for: .commandCode(id))) }
+                }
+            }
+            for id in openRouter {
+                group.addTask {
+                    do { return .openRouter(id, try await fetchers.openRouter(id)) }
+                    catch is CancellationError { return .cancelled }
+                    catch { return .failed(.openRouter(id), AppRefreshError.text(error, for: .openRouter(id))) }
+                }
+            }
+            for id in ollamaCloud {
+                group.addTask {
+                    do { return .ollamaCloud(id, try await fetchers.ollamaCloud(id)) }
+                    catch is CancellationError { return .cancelled }
+                    catch { return .failed(.ollamaCloud(id), AppRefreshError.text(error, for: .ollamaCloud(id))) }
+                }
+            }
+            for id in qoder {
+                group.addTask {
+                    do { return .qoder(id, try await fetchers.qoder(id)) }
+                    catch is CancellationError { return .cancelled }
+                    catch { return .failed(.qoder(id), AppRefreshError.text(error, for: .qoder(id))) }
                 }
             }
             for id in tokenIDs {
@@ -273,6 +332,9 @@ struct AppRefreshFetchers {
                 case let .codex(id, value): snapshots[id] = value; refreshErrors[.codex(id)] = nil
                 case let .openCodeGo(id, value): openCodeGoSnapshots[id] = value; refreshErrors[.openCodeGo(id)] = nil
                 case let .commandCode(id, value): commandCodeSnapshots[id] = value; refreshErrors[.commandCode(id)] = nil
+                case let .openRouter(id, value): openRouterSnapshots[id] = value; refreshErrors[.openRouter(id)] = nil
+                case let .ollamaCloud(id, value): ollamaCloudSnapshots[id] = value; refreshErrors[.ollamaCloud(id)] = nil
+                case let .qoder(id, value): qoderSnapshots[id] = value; refreshErrors[.qoder(id)] = nil
                 case let .deepSeek(id, value): balances[id] = value; refreshErrors[.deepSeek(id)] = nil; deepSeekFailed.remove(id)
                 case let .antigravity(value): antigravity = value; refreshErrors[.antigravity] = nil
                 case let .claude(value): claudeSnapshot = value; refreshErrors[.claude] = nil
@@ -340,6 +402,26 @@ struct AppRefreshFetchers {
     func removeCommandCode(_ id: String) async {
         do { try await CommandCodeService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
         catch { message = "移除失败，请解锁后重试" }
+    }
+    func removeOpenRouter(_ id: String) async {
+        do { try await OpenRouterService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
+        catch { message = "移除失败，请解锁后重试" }
+    }
+    func removeOllamaCloud(_ id: String) async {
+        do { try await OllamaCloudService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
+        catch { message = "移除失败，请解锁后重试" }
+    }
+    func removeQoder(_ id: String) async {
+        do { try await QoderService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
+        catch { message = "移除失败，请解锁后重试" }
+    }
+    /// Local display-only plan. Nothing is fetched and the usage parser is untouched.
+    func setOpenCodeGoPlan(_ plan: OpenCodeGoPlan, id: String) {
+        do {
+            try ProviderPreferences.setOpenCodeGoPlan(plan, accountID: id)
+            preferencesRevision += 1
+            WidgetCenter.shared.reloadAllTimelines()
+        } catch { message = "套餐设置保存失败，请检查共享容器" }
     }
     func removeDeepSeek(_ id: String) async {
         do { try await DeepSeekService.shared.remove(id); reloadAccounts(); WidgetCenter.shared.reloadAllTimelines() }
@@ -643,7 +725,7 @@ struct ContentView: View {
         }
         for id in model.openCodeGoIDs {
             cards.append((cardKey("opencodego", id), AnyView(APIUsageAccountCard(brand: .opencodego,
-                snapshot: model.openCodeGoSnapshots[id].map { ProviderCardData($0) },
+                snapshot: model.openCodeGoSnapshots[id].map { ProviderCardData($0, plan: ProviderPreferences.openCodeGoPlan(accountID: id)) },
                 expanded: expandedBinding("opencodego:" + id), palette: palette,
                 onRefresh: { Task { await model.refresh(target: .openCodeGo(id)) } },
                 onUpdateKey: { connect = .apiKeyReplacement(.opencodego, id) },
@@ -660,6 +742,36 @@ struct ContentView: View {
                 onRemove: { Task { await model.removeCommandCode(id) } }, busy: model.busy,
                 refreshError: model.refreshErrors[.commandCode(id)],
                 accountContext: "Command Code · 账号 \((model.commandCodeIDs.firstIndex(of: id) ?? 0) + 1)"))))
+        }
+        for id in model.openRouterIDs {
+            cards.append((cardKey("openrouter", id), AnyView(APIUsageAccountCard(brand: .openrouter,
+                snapshot: model.openRouterSnapshots[id].map { ProviderCardData($0) },
+                expanded: expandedBinding("openrouter:" + id), palette: palette,
+                onRefresh: { Task { await model.refresh(target: .openRouter(id)) } },
+                onUpdateKey: { connect = .apiKeyReplacement(.openrouter, id) },
+                onRemove: { Task { await model.removeOpenRouter(id) } }, busy: model.busy,
+                refreshError: model.refreshErrors[.openRouter(id)],
+                accountContext: "OpenRouter · 账号 \((model.openRouterIDs.firstIndex(of: id) ?? 0) + 1)"))))
+        }
+        for id in model.ollamaCloudIDs {
+            cards.append((cardKey("ollamacloud", id), AnyView(APIUsageAccountCard(brand: .ollamacloud,
+                snapshot: model.ollamaCloudSnapshots[id].map { ProviderCardData($0) },
+                expanded: expandedBinding("ollamacloud:" + id), palette: palette,
+                onRefresh: { Task { await model.refresh(target: .ollamaCloud(id)) } },
+                onUpdateKey: { connect = .apiKeyReplacement(.ollamacloud, id) },
+                onRemove: { Task { await model.removeOllamaCloud(id) } }, busy: model.busy,
+                refreshError: model.refreshErrors[.ollamaCloud(id)],
+                accountContext: "Ollama Cloud · 账号 \((model.ollamaCloudIDs.firstIndex(of: id) ?? 0) + 1)"))))
+        }
+        for id in model.qoderIDs {
+            cards.append((cardKey("qoder", id), AnyView(APIUsageAccountCard(brand: .qoder,
+                snapshot: model.qoderSnapshots[id].map { ProviderCardData($0) },
+                expanded: expandedBinding("qoder:" + id), palette: palette,
+                onRefresh: { Task { await model.refresh(target: .qoder(id)) } },
+                onUpdateKey: { connect = .apiKeyReplacement(.qoder, id) },
+                onRemove: { Task { await model.removeQoder(id) } }, busy: model.busy,
+                refreshError: model.refreshErrors[.qoder(id)],
+                accountContext: "Qoder · 账号 \((model.qoderIDs.firstIndex(of: id) ?? 0) + 1)"))))
         }
         if model.antigravityInstalled {
             cards.append((cardKey("antigravity", nil), AnyView(AntigravityCard(snapshot: model.antigravity,
@@ -759,6 +871,9 @@ struct ContentView: View {
         // Accounts added or removed change which rows the widget may refresh.
         .onChange(of: model.openCodeGoIDs) { _, _ in Task { await reloadAuth() } }
         .onChange(of: model.commandCodeIDs) { _, _ in Task { await reloadAuth() } }
+        .onChange(of: model.openRouterIDs) { _, _ in Task { await reloadAuth() } }
+        .onChange(of: model.ollamaCloudIDs) { _, _ in Task { await reloadAuth() } }
+        .onChange(of: model.qoderIDs) { _, _ in Task { await reloadAuth() } }
         .onChange(of: model.accounts) { _, _ in Task { await reloadAuth() } }
         .onChange(of: model.deepSeekIDs) { _, _ in Task { await reloadAuth() } }
     }
@@ -901,6 +1016,7 @@ struct ContentView: View {
     }
     // MARK: - 设置
     @ViewBuilder var settingsSections: some View {
+        CacheSettingsCard(palette: palette)
         AppCard(title: "组件刷新", caption: "默认关闭，先用握手确认共享组", systemImage: "arrow.triangle.2.circlepath", palette: palette) {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("允许组件独立联网刷新", isOn: Binding(get: { widgetConsentEnabled }, set: { enabled in

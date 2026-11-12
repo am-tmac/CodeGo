@@ -6,7 +6,7 @@ import SwiftUI
 /// One provider's look: its official mark (App-only asset catalog) and its meter colours.
 /// Codex keeps the palette's original blue so its card is pixel-identical to before.
 enum ServiceBrand: String, CaseIterable, Identifiable {
-    case codex, claude, deepseek, antigravity, opencodego, commandcode
+    case codex, claude, deepseek, antigravity, opencodego, commandcode, openrouter, ollamacloud, qoder
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -16,6 +16,9 @@ enum ServiceBrand: String, CaseIterable, Identifiable {
         case .commandcode: return "Command Code"
         case .deepseek: return "DeepSeek"
         case .antigravity: return "Antigravity"
+        case .openrouter: return "OpenRouter"
+        case .ollamacloud: return "Ollama Cloud"
+        case .qoder: return "Qoder"
         }
     }
     var connectCaption: String {
@@ -26,6 +29,9 @@ enum ServiceBrand: String, CaseIterable, Identifiable {
         case .commandcode: return "API Key 订阅额度"
         case .deepseek: return "API Key 余额"
         case .antigravity: return "Google 账号登录"
+        case .openrouter: return "API Key 余额"
+        case .ollamacloud: return "API Key 余额"
+        case .qoder: return "个人访问令牌"
         }
     }
     var connectBlurb: String {
@@ -36,11 +42,15 @@ enum ServiceBrand: String, CaseIterable, Identifiable {
         case .commandcode: return "保存 Command Code API Key，查看订阅额度。"
         case .deepseek: return "保存 DeepSeek API Key，查看 API 平台余额。"
         case .antigravity: return "登录 Google 账号，查看 Antigravity 模型额度。"
+        case .openrouter: return "保存 OpenRouter API Key，查看剩余额度和本 Key 限额。"
+        case .ollamacloud: return "保存 Ollama Cloud API Key，查看账号余额。"
+        case .qoder: return "保存 Qoder 个人访问令牌，查看每周和每月额度。"
         }
     }
     /// Asset names in App/Assets.xcassets. OpenAI's mark is a template (follows the text colour);
-    /// the others keep their official colours.
-    var logoAsset: String {
+    /// the others keep their official colours. Nil means the App has no official mark yet and
+    /// `symbolName` is drawn instead (the three newest services).
+    var logoAsset: String? {
         switch self {
         case .codex: return "LogoOpenAI"
         case .claude: return "LogoClaude"
@@ -48,6 +58,16 @@ enum ServiceBrand: String, CaseIterable, Identifiable {
         case .commandcode: return "LogoCommandCode"
         case .deepseek: return "LogoDeepSeek"
         case .antigravity: return "LogoAntigravity"
+        case .openrouter, .ollamacloud, .qoder: return nil
+        }
+    }
+    /// SF Symbol placeholder used when no official mark is bundled.
+    var symbolName: String {
+        switch self {
+        case .openrouter: return "arrow.triangle.branch"
+        case .ollamacloud: return "cloud"
+        case .qoder: return "chevron.left.forwardslash.chevron.right"
+        default: return "chart.bar"
         }
     }
     /// The colours live in `MeterTint` (Shared/UsageViews.swift) so the widget uses the same ones.
@@ -70,10 +90,15 @@ struct BrandMark: View {
     var size: CGFloat = 24
     var body: some View {
         Group {
-            if brand == .codex || brand == .opencodego || brand == .commandcode {
-                Image(brand.logoAsset).renderingMode(.template).resizable().foregroundStyle(palette.primary)
+            if let asset = brand.logoAsset {
+                if brand == .codex || brand == .opencodego || brand == .commandcode {
+                    Image(asset).renderingMode(.template).resizable().foregroundStyle(palette.primary)
+                } else {
+                    Image(asset).renderingMode(.original).resizable()
+                }
             } else {
-                Image(brand.logoAsset).renderingMode(.original).resizable()
+                // No bundled official mark for this service yet: a neutral SF Symbol placeholder.
+                Image(systemName: brand.symbolName).resizable().scaledToFit().foregroundStyle(palette.primary)
             }
         }
         .aspectRatio(contentMode: .fit)
@@ -212,6 +237,9 @@ struct ConnectSheet: View {
         case .commandcode: return model.commandCodeIDs.count
         case .deepseek: return model.deepSeekIDs.count
         case .antigravity: return model.antigravityInstalled ? 1 : 0
+        case .openrouter: return model.openRouterIDs.count
+        case .ollamacloud: return model.ollamaCloudIDs.count
+        case .qoder: return model.qoderIDs.count
         }
     }
     var picker: some View {
@@ -296,6 +324,9 @@ struct ConnectServicePage: View {
         case .commandcode: CommandCodePanel(model: model, replacing: replacing)
         case .deepseek: DeepSeekPanel(model: model, replacing: replacing)
                 case .antigravity: AntigravityPanel(model: model, palette: palette)
+                case .openrouter: OpenRouterPanel(model: model, replacing: replacing)
+                case .ollamacloud: OllamaCloudPanel(model: model, replacing: replacing)
+                case .qoder: QoderPanel(model: model, replacing: replacing)
                 }
                 if let message = model.message {
                     Text(message).font(.callout).foregroundStyle(palette.danger)
@@ -376,7 +407,7 @@ struct EmptyConnectView: View {
             }
             .accessibilityHidden(true)
             Text("连接账号").scaledFont(24, weight: .bold, relativeTo: .title2).foregroundStyle(palette.primary).padding(.top, 28)
-            Text("点「连接账号」添加 Codex、Claude、DeepSeek、Antigravity、OpenCode Go 或 Command Code，每个账号会在这里单独显示额度。")
+            Text("点「连接账号」添加 Codex、Claude、DeepSeek、Antigravity、OpenCode Go、Command Code、OpenRouter、Ollama Cloud 或 Qoder，每个账号会在这里单独显示额度。")
                 .scaledFont(15, relativeTo: .subheadline).foregroundStyle(palette.secondary)
                 .multilineTextAlignment(.center).padding(.top, 10)
             Button(action: onConnect) {

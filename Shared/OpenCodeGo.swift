@@ -135,10 +135,12 @@ actor OpenCodeGoService {
     static let shared = OpenCodeGoService()
     let api: OpenCodeGoAPI
     init(api: OpenCodeGoAPI = OpenCodeGoAPI()) { self.api = api }
-    func install(key: String, replacing id: String? = nil) throws -> String {
+    func install(key: String, plan: OpenCodeGoPlan = .go, replacing id: String? = nil) throws -> String {
         let id = id ?? "opencodego-" + UUID().uuidString
         let lease = try CredentialLease(account: id); defer { withExtendedLifetime(lease) {} }
         try OpenCodeGoStore.saveKey(key, id: id)
+        // Local, non-secret display choice; it never touches the API or the usage parser.
+        try ProviderPreferences.setOpenCodeGoPlan(plan, accountID: id)
         let url = try OpenCodeGoStore.snapshotURL(id)
         if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
         try WidgetRefreshAttempt().save(id)
@@ -147,7 +149,7 @@ actor OpenCodeGoService {
     }
     func remove(_ id: String) throws {
         let lease = try CredentialLease(account: id); defer { withExtendedLifetime(lease) {} }
-        try OpenCodeGoStore.remove(id); try DashboardStore.publish()
+        try OpenCodeGoStore.remove(id); try? ProviderPreferences.remove(accountID: id); try DashboardStore.publish()
     }
     func refresh(id: String, widget: Bool = SharedStorage.isWidget, permission: (() -> Bool)? = nil) async throws -> OpenCodeGoSnapshot {
         func check() throws {

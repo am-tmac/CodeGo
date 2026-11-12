@@ -33,50 +33,8 @@ struct ThemePalette {
 }
 
 #if CODEX_WIDGET
-/// One control for the whole widget: it refreshes every configured slot that is allowed to
-/// refresh, and never the same account twice. A slot that may not refresh is skipped rather
-/// than silently re-pointed at another account.
-struct RefreshDashboardIntent: AppIntent {
-    static var title: LocalizedStringResource = "刷新组件账号"
-    static var openAppWhenRun = false
-    @Parameter(title: "左栏账号") var leftID: String?
-    @Parameter(title: "右栏账号") var rightID: String?
-    init() {}
-    init(leftID: String?, rightID: String?) { self.leftID = leftID; self.rightID = rightID }
-    func perform() async throws -> some IntentResult {
-        defer { WidgetCenter.shared.reloadAllTimelines() }
-        let targets = RefreshTargets.unique([leftID, rightID]).filter {
-            DashboardStore.canRefreshAnyProvider($0) &&
-            ($0 != ClaudeStore.id || !WidgetRefreshAttempt.load($0).requiresAppRefresh)
-        }
-        let accounts = DashboardStore.accounts()
-        // Both slots at once (build 28): the tap now waits for the slower slot, not the sum.
-        await withTaskGroup(of: Void.self) { group in
-            for id in targets {
-                let provider = accounts.first(where: { $0.id == id })?.provider ?? "codex"
-                group.addTask { _ = try? await WidgetRefresh.one(id: id, provider: provider, notifyProgress: true) }
-            }
-        }
-        try Task.checkCancellation()
-        return .result()
-    }
-}
-
-/// One slot's refresh, the same for the timeline and the button. The last good cache and the
-/// persisted failure flag survive any error.
-enum WidgetRefresh {
-    static func one(id: String, provider: String, notifyProgress: Bool = false) async throws {
-        switch provider {
-        case "opencodego": _ = try await OpenCodeGoService.shared.refresh(id: id)
-        case "commandcode": _ = try await CommandCodeService.shared.refresh(id: id)
-        case "deepseek": _ = try await DeepSeekService.shared.refresh(id: id)
-        case "claude": _ = try await ClaudeService.shared.refresh()
-        case "antigravity": _ = try await AntigravityService.shared.refresh()
-        case "tokensci": return // Cache-only: opening 用量 refreshes through the App model.
-        default: _ = try await UsageService.shared.refresh(account: id, widget: true, notifyProgress: notifyProgress, permission: { DashboardStore.canRefresh(id, provider: "codex") })
-        }
-    }
-}
+// The interactive refresh intent and the per-slot refresh entry point now live in
+// Shared/WidgetRefreshLogic.swift so the timeline, the button and the unit tests share one path.
 #endif
 
 struct RefreshAffordance: View {
@@ -99,32 +57,27 @@ struct RefreshAffordance: View {
         Image(systemName: "arrow.clockwise").font(.system(size: 12, weight: .semibold))
             .foregroundStyle(palette.refresh)
     }
-    /// Not authorised: a deliberately different glyph. Opening the App is not an in-widget
-    /// refresh, so it must never wear the circular refresh symbol — the user reads that symbol as
-    /// "this refreshes here", and build 19 was rejected for exactly that disguise.
-    var openAppGlyph: some View {
-        Image(systemName: "arrow.up.forward.app").font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(palette.refresh)
-    }
-    /// The open-App branch is a `Link` (the only way a widget can launch its App); the widget root
-    /// carries no `widgetURL`, so no other tap is routed around the AppIntent button.
-    static let openAppURL = URL(string: "codexusage://refresh")!
+    /// The cache-only action uses the same refresh mark; its accessibility label explains
+    /// that the coordinator will only reload cached data without authorisation.
+    var openAppGlyph: some View { glyph }
     var body: some View {
         #if CODEX_WIDGET
+        // Build 50: the control is an iOS 17 interactive-widget button in BOTH states. Without the
+        // sharing handshake or consent the intent's coordinator authorises nothing, so the tap
+        // only reloads the timeline and re-reads the cache — no request, no error, no alert.
         if canRefresh {
-            placed(Button(intent: RefreshDashboardIntent(leftID: leftID, rightID: rightID)) {
+            placed(Button(intent: RefreshWidgetIntent(leftID: leftID, rightID: rightID)) {
                 glyph
             }.buttonStyle(.plain).frame(width: 44, height: 44).contentShape(Rectangle()).accessibilityLabel(label))
         } else {
-            // The control is present in BOTH states. Without the sharing handshake and the user's
-            // consent an extension cannot fetch, so the honest control opens the App where the
-            // fetch is allowed — under a different glyph and its own label.
-            placed(Link(destination: Self.openAppURL) {
+            placed(Button(intent: RefreshWidgetIntent(leftID: leftID, rightID: rightID)) {
                 openAppGlyph
-            }.frame(width: 44, height: 44).contentShape(Rectangle()).accessibilityLabel("打开 App 刷新"))
+            }.buttonStyle(.plain).frame(width: 44, height: 44).contentShape(Rectangle())
+                .accessibilityLabel("重新载入缓存"))
         }
         #else
-        if canRefresh { placed(glyph) }
+        if canRefresh { placed(glyph.frame(width: 44, height: 44)) }
+        else { placed(openAppGlyph.frame(width: 44, height: 44)) }
         #endif
     }
     @ViewBuilder func placed<V: View>(_ control: V) -> some View {
@@ -437,12 +390,15 @@ struct DeepSeekStackedCardView: View {
 /// Per-service meter colours, shared by the App cards and the widget (build 28) so the two can
 /// never drift apart. Codex and DeepSeek keep the original blue; ≤20% left turns danger red.
 enum MeterTint: String {
-    case codex, claude, deepseek, antigravity, opencodego, commandcode
+    case codex, claude, deepseek, antigravity, opencodego, commandcode, openrouter, ollamacloud, qoder
     func lit(dark: Bool) -> Color {
         switch self {
         case .codex, .deepseek, .opencodego, .commandcode: return dark ? Color(red: 0.212, green: 0.620, blue: 0.961) : Color(red: 0.129, green: 0.522, blue: 0.929)
         case .claude: return dark ? Color(red: 0.910, green: 0.537, blue: 0.290) : Color(red: 0.851, green: 0.467, blue: 0.169)
         case .antigravity: return dark ? Color(red: 0.208, green: 0.753, blue: 0.541) : Color(red: 0.122, green: 0.620, blue: 0.431)
+        case .openrouter: return dark ? Color(red: 0.639, green: 0.545, blue: 0.988) : Color(red: 0.435, green: 0.318, blue: 0.878)
+        case .ollamacloud: return dark ? Color(red: 0.780, green: 0.780, blue: 0.800) : Color(red: 0.243, green: 0.243, blue: 0.263)
+        case .qoder: return dark ? Color(red: 0.259, green: 0.776, blue: 0.804) : Color(red: 0.063, green: 0.541, blue: 0.588)
         }
     }
     func rest(dark: Bool) -> Color {
@@ -450,6 +406,9 @@ enum MeterTint: String {
         case .codex, .deepseek, .opencodego, .commandcode: return dark ? Color(red: 0.133, green: 0.204, blue: 0.282) : Color(red: 0.851, green: 0.878, blue: 0.918)
         case .claude: return dark ? Color(red: 0.239, green: 0.165, blue: 0.114) : Color(red: 0.945, green: 0.878, blue: 0.824)
         case .antigravity: return dark ? Color(red: 0.098, green: 0.227, blue: 0.176) : Color(red: 0.827, green: 0.922, blue: 0.882)
+        case .openrouter: return dark ? Color(red: 0.192, green: 0.169, blue: 0.310) : Color(red: 0.902, green: 0.882, blue: 0.965)
+        case .ollamacloud: return dark ? Color(red: 0.212, green: 0.212, blue: 0.227) : Color(red: 0.882, green: 0.882, blue: 0.898)
+        case .qoder: return dark ? Color(red: 0.102, green: 0.235, blue: 0.243) : Color(red: 0.851, green: 0.933, blue: 0.941)
         }
     }
     static func lowLit(dark: Bool) -> Color { dark ? Color(red: 1.0, green: 0.35, blue: 0.32) : Color(red: 0.80, green: 0.16, blue: 0.13) }
@@ -655,34 +614,226 @@ struct DeepSeekBalanceView: View {
 struct APIUsageCompactView: View {
     let title: String
     let snapshot: ProviderCardData?
-    let command: Bool
+    var tint: MeterTint = .opencodego
+    var emptyLabels: [String] = ["5 小时", "每周", "每月"]
+    /// The OpenCode Go plan is shown beside the provider name. Other providers keep their
+    /// pre-existing header (their plan value is not a user-selected local label).
+    var showsPlan = true
     let failed: Bool
     let cacheOnly: Bool
     var palette: ThemePalette
     var display: UsageDisplay
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(palette.primary).lineLimit(1).minimumScaleFactor(0.7)
-            ForEach(snapshot?.rows ?? ProviderCardData.emptyRows(command: command)) { row in
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(palette.primary).lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 2)
+                // The OpenCode Go plan is a local choice, so it is shown beside the provider name
+                // on the collapsed row too.
+                if let plan = snapshot?.plan, showsPlan {
+                    Text(plan).font(.system(size: 9, weight: .semibold)).foregroundStyle(palette.secondary)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                }
+            }
+            ForEach(snapshot?.rows ?? ProviderCardData.emptyRows(labels: emptyLabels)) { row in
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 2) {
                         Text(row.label)
                         Spacer(minLength: 0)
                         Text(display.text(row.window?.remaining)).monospacedDigit()
                     }.font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.primary)
-                    QuotaBar(remaining: row.window?.remaining, tint: command ? .commandcode : .opencodego, display: display, height: 3, palette: palette)
-                    Text(row.money.map { "剩余 " + $0 } ?? Countdown.short(row.reset ?? row.window?.resetDate))
-                        .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.7)
-                    if row.money != nil {
-                        Text(Countdown.short(row.reset ?? row.window?.resetDate)).font(.system(size: 8)).foregroundStyle(palette.secondary)
+                    if row.window != nil {
+                        QuotaBar(remaining: row.window?.remaining, tint: tint, display: display, height: 3, palette: palette)
+                    }
+                    if let money = row.money {
+                        Text((row.window == nil ? row.label + " " : row.moneyPrefix) + money)
+                            .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.7)
+                        if let reset = row.reset ?? row.window?.resetDate {
+                            Text(Countdown.short(reset)).font(.system(size: 8)).foregroundStyle(palette.secondary)
+                        }
+                    } else if let detail = row.detail {
+                        Text(detail).font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1)
+                    } else {
+                        Text(Countdown.short(row.reset ?? row.window?.resetDate))
+                            .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.7)
                     }
                 }
             }
-            if let note = snapshot?.grantNote { Text(note).font(.system(size: 8)).foregroundStyle(palette.secondary) }
+            if let note = snapshot?.grantNote { Text(note).font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1) }
             if let purchased = snapshot?.purchased { Text("加购 " + purchased).font(.system(size: 8)).foregroundStyle(palette.secondary) }
             Spacer(minLength: 0)
             Text(failed ? "刷新失败 · 保留缓存" : (cacheOnly ? "仅缓存 · 打开 App 刷新" : (snapshot?.stale == true ? "数据已过期" : "更新 " + (snapshot.map { RelativeTime.stamp($0.updatedAt) } ?? "—"))))
                 .font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1)
         }
     }
+}
+
+// MARK: - Widget-only Nowdex presentation (App palettes and cards stay unchanged)
+extension ThemePalette {
+    static func widget(scheme: ColorScheme) -> ThemePalette {
+        let ink: Color = scheme == .dark ? .white : .black
+        return ThemePalette(background: scheme == .dark ? .black : Color(red: 249/255, green: 249/255, blue: 251/255),
+                            primary: ink, secondary: ink.opacity(scheme == .dark ? 0.62 : 0.58),
+                            track: scheme == .dark ? Color(red: 44/255, green: 44/255, blue: 46/255) : Color(red: 228/255, green: 228/255, blue: 233/255),
+                            divider: ink.opacity(0.08), refresh: ink.opacity(0.62), warning: .orange)
+    }
+}
+
+struct WidgetReading: Identifiable {
+    var id: String { title }
+    let title: String
+    var remaining: Double? = nil
+    var reset: Date? = nil
+    var value: String? = nil
+    var detail: String? = nil
+}
+
+
+
+struct WidgetMeter: View {
+    let remaining: Double?
+    let tint: MeterTint
+    let segmented: Bool
+    let palette: ThemePalette
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        let used = UsageDisplay.used.shown(remaining) ?? 0
+        let color = tint.lit(dark: scheme == .dark)
+        Canvas { context, size in
+            let gradient = Gradient(colors: [color.opacity(0.55), color])
+            if segmented {
+                let count = 30
+                let gap: CGFloat = 2
+                let width = max(1, (size.width - CGFloat(count - 1) * gap) / CGFloat(count))
+                for index in 0..<count {
+                    let rect = CGRect(x: CGFloat(index) * (width + gap), y: 0, width: width, height: size.height)
+                    let path = Path(rect)
+                    context.fill(path, with: .color(palette.track))
+                    if Double(index) < (used / 100 * Double(count)).rounded() {
+                        context.fill(path, with: .linearGradient(gradient, startPoint: .zero, endPoint: CGPoint(x: size.width, y: 0)))
+                    }
+                }
+            } else {
+                let track = Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: 3)
+                context.fill(track, with: .color(palette.track))
+                context.clip(to: track)
+                context.fill(Path(CGRect(x: 0, y: 0, width: size.width * used / 100, height: size.height)),
+                             with: .linearGradient(gradient, startPoint: .zero, endPoint: CGPoint(x: size.width, y: 0)))
+            }
+        }
+        .frame(height: segmented ? 9 : 6)
+        .accessibilityLabel(UsageDisplay.used.accessibility(remaining))
+    }
+}
+
+struct NowdexWidgetCard: View {
+    let title: String
+    let logo: String?
+    let symbol: String
+    let readings: [WidgetReading]
+    let tint: MeterTint
+    let updatedAt: Date?
+    let now: Date
+    let medium: Bool
+    let reservesRefresh: Bool
+    let palette: ThemePalette
+    let display: UsageDisplay
+    var plan: String? = nil
+    var status: String? = nil
+    var footer: String? = nil
+    private var visibleReadings: [WidgetReading] { medium ? readings : Array(readings.prefix(2)) }
+    private var extraSummary: String? {
+        guard !medium, readings.count > 2 else { return nil }
+        return readings.dropFirst(2).map {
+            $0.title + " " + ($0.value ?? display.text($0.remaining)) + ($0.detail.map { " · " + $0 } ?? "")
+        }.joined(separator: " · ") + (plan.map { " · " + $0 } ?? "")
+    }
+    private func countdown(_ reset: Date?) -> String {
+        guard let reset else { return "重置时间未知" }
+        let minutes = max(0, Int(reset.timeIntervalSince(now) / 60))
+        if minutes == 0 { return "已到重置时间" }
+        let hours = minutes / 60
+        return (hours >= 24 ? "\(hours / 24)d " : "") + String(format: "%d:%02d", hours % 24, minutes % 60)
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: medium ? 1 : 3) {
+            HStack(spacing: 5) {
+                Group {
+                    if let logo { Image(logo).resizable().scaledToFit() }
+                    else { Image(systemName: symbol).resizable().scaledToFit() }
+                }.frame(width: 17, height: 17).accessibilityHidden(true)
+                Text(title).font(.system(size: 15, weight: .semibold))
+                    .lineLimit(1).minimumScaleFactor(0.65)
+                Spacer(minLength: 0)
+            }
+            .padding(.trailing, reservesRefresh ? 22 : 0)
+            if medium {
+                HStack(alignment: .top, spacing: 10) {
+                    ForEach(visibleReadings) { reading in
+                        readingView(reading).frame(maxWidth: .infinity, alignment: .topLeading)
+                    }
+                }
+            } else {
+                ForEach(visibleReadings) { reading in readingView(reading) }
+            }
+            Spacer(minLength: 0)
+            if let extraSummary {
+                Text(extraSummary).font(.system(size: 8)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.6)
+            }
+            if let footer, !footer.isEmpty {
+                Text(footer).font(.system(size: 8)).foregroundStyle(palette.primary.opacity(0.38)).lineLimit(1).minimumScaleFactor(0.6)
+            }
+            if status != nil || (plan != nil && extraSummary == nil) {
+                HStack(spacing: 3) {
+                    if let status { Text(status).lineLimit(1).minimumScaleFactor(0.55) }
+                    Spacer(minLength: 0)
+                    if let plan, extraSummary == nil { Text(plan).fontWeight(.semibold).lineLimit(1) }
+                }.font(.system(size: 8)).foregroundStyle(palette.secondary)
+            }
+        }.foregroundStyle(palette.primary).monospacedDigit()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+    private func readingView(_ reading: WidgetReading) -> some View {
+        let dense = visibleReadings.count > 2
+        return Group {
+                VStack(alignment: .leading, spacing: medium ? 1 : (dense ? 2 : 3)) {
+                    let layout = medium ? AnyLayout(VStackLayout(alignment: .leading, spacing: 1)) : AnyLayout(HStackLayout(alignment: .center, spacing: 3))
+                    layout {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(reading.title).font(.system(size: dense ? 11 : 13.5, weight: .semibold))
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                            if !medium, reading.value == nil {
+                                Label(countdown(reading.reset), systemImage: "clock")
+                                    .font(.system(size: dense ? 8 : 10.5)).foregroundStyle(palette.secondary)
+                                    .lineLimit(1).minimumScaleFactor(0.65)
+                            }
+                        }
+                        if !medium { Spacer(minLength: 0) }
+                        HStack(alignment: .top, spacing: 1) {
+                            Text(reading.value ?? display.shown(reading.remaining).map { String(Int($0.rounded())) } ?? "—")
+                                .font(.system(size: dense ? 22 : 34, weight: .bold)).lineLimit(1).minimumScaleFactor(0.5)
+                            if reading.value == nil, reading.remaining != nil {
+                                Text("%").font(.system(size: 12.5, weight: .semibold)).padding(.top, 4)
+                            }
+                        }.accessibilityLabel(reading.value ?? display.accessibility(reading.remaining))
+                    }
+                    if reading.value == nil {
+                        WidgetMeter(remaining: reading.remaining, tint: tint, segmented: !medium, palette: palette)
+                        if medium {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Used \(UsageDisplay.used.text(reading.remaining))")
+                                Text("Remaining \(UsageDisplay.remaining.text(reading.remaining))")
+                            }.font(.system(size: dense ? 7 : 8)).foregroundStyle(palette.secondary)
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                            Label((dense ? "" : "Reset · ") + countdown(reading.reset), systemImage: "clock")
+                                .font(.system(size: dense ? 7 : 9)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.5)
+                        }
+                    }
+                    if let detail = reading.detail {
+                        Text(detail).font(.system(size: 9)).foregroundStyle(palette.secondary).lineLimit(1).minimumScaleFactor(0.65)
+                    }
+                }
+        }
+    }
+
 }

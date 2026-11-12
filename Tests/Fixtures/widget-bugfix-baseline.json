@@ -1,5 +1,6 @@
 {
-  "Widget/CodeGoWidget.swift": "c1e485962241c3b2ef47d9cdb1efe3b0c79039ca2bcda3c3b8dbde1133a6c1c3",
+  "Widget/CodeGoWidget.swift": "b6406fbec36dc98fcdda6ef0ce014b77ab1562256921d9256c832a56e1074a4e",
   "Widget/Info.plist": "ae8bb07884811ed76e6ec67a63083e856c2c6ba84da2c13b1d5af1cb44bbd533",
-  "Shared/UsageViews.swift": "64153467f9ea4183856e36f91d196349e33fa8ad36bc2e3e086b78307fc87bcd"
+  "Shared/UsageViews.swift": "10bd3ef564918818931ee3ac698a672bf1f15797118f9cb0be57097cae80f72e",
+  "Shared/WidgetRefreshLogic.swift": "94c8b2a6c7912d4f70883d93eb91b739ca23137e82d0f7b5d6ed6d31279881f7"
 }

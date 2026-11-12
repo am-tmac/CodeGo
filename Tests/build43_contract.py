@@ -13,7 +13,8 @@ class Build43Contract(unittest.TestCase):
                     self.assertNotIn(forbidden, source, str(path))
     def test_name_and_version(self):
         project = (ROOT/'CodeGo.xcodeproj/project.pbxproj').read_text()
-        self.assertIn('MARKETING_VERSION = 4.7;', project)
-        self.assertIn('CURRENT_PROJECT_VERSION = 44;', project)
+        # 6.3 / 51: Nowdex widget presentation; refresh semantics are unchanged.
+        self.assertIn('MARKETING_VERSION = 6.3;', project)
+        self.assertIn('CURRENT_PROJECT_VERSION = 51;', project)
         self.assertFalse((ROOT/'CodexUsage.xcodeproj').exists())
 if __name__ == '__main__': unittest.main()
